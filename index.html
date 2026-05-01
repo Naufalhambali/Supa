@@ -888,7 +888,7 @@ body.modal-open { overflow: hidden; }
       </div>
       <div class="dropdown-item" onclick="clearCacheAndReload()">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-        <span>Reset Cache & Refresh Data</span>
+        <span>Reset Cache & Refresh</span>
       </div>
       <div class="dropdown-divider"></div>
       <div class="dropdown-item danger" onclick="confirmLogout()">
@@ -1034,7 +1034,17 @@ body.modal-open { overflow: hidden; }
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             <input type="text" placeholder="Cari nama, bin, atau kamar..." id="cat-search" oninput="renderCateringTable()">
           </div>
-          <button class="btn-filter"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg></button>
+          <button class="btn-filter" id="btn-filter-catering" onclick="toggleFilter('catering')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg></button>
+        </div>
+        <div id="filter-panel-catering" style="display:none;background:var(--card);border:1px solid var(--card-border);border-radius:10px;padding:12px;margin-bottom:10px">
+          <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px">FILTER KAMAR</div>
+          <div id="filter-kamar-btns" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          <div style="margin-top:10px;font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px">STATUS BULAN INI</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="tab-btn active" id="fcat-semua" onclick="setCatStatusFilter('semua')" style="font-size:11px;padding:4px 10px">Semua</button>
+            <button class="tab-btn" id="fcat-lunas" onclick="setCatStatusFilter('lunas')" style="font-size:11px;padding:4px 10px">Lunas</button>
+            <button class="tab-btn" id="fcat-belum" onclick="setCatStatusFilter('belum')" style="font-size:11px;padding:4px 10px">Belum Bayar</button>
+          </div>
         </div>
         <div class="table-wrap">
           <div class="table-scroll">
@@ -1071,7 +1081,17 @@ body.modal-open { overflow: hidden; }
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             <input type="text" placeholder="Cari nama, bin, binti, atau kelas..." id="spp-search" oninput="renderSppTable()">
           </div>
-          <button class="btn-filter"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg></button>
+          <button class="btn-filter" id="btn-filter-spp" onclick="toggleFilter('spp')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg></button>
+        </div>
+        <div id="filter-panel-spp" style="display:none;background:var(--card);border:1px solid var(--card-border);border-radius:10px;padding:12px;margin-bottom:10px">
+          <div style="font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px">FILTER KELAS</div>
+          <div id="filter-kelas-btns" style="display:flex;flex-wrap:wrap;gap:6px"></div>
+          <div style="margin-top:10px;font-size:12px;font-weight:700;color:var(--text-secondary);margin-bottom:8px">STATUS BULAN INI</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="tab-btn active" id="fspp-semua" onclick="setSppStatusFilter('semua')" style="font-size:11px;padding:4px 10px">Semua</button>
+            <button class="tab-btn" id="fspp-lunas" onclick="setSppStatusFilter('lunas')" style="font-size:11px;padding:4px 10px">Lunas</button>
+            <button class="tab-btn" id="fspp-belum" onclick="setSppStatusFilter('belum')" style="font-size:11px;padding:4px 10px">Belum Bayar</button>
+          </div>
         </div>
         <div class="table-wrap">
           <div class="table-scroll">
@@ -1540,11 +1560,10 @@ body.modal-open { overflow: hidden; }
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 // ==========================================
-// SUPABASE CONFIG — GANTI DENGAN MILIK KAMU
+// SUPABASE CONFIG
 // ==========================================
 const SUPABASE_URL = 'https://bnpczblikmqwclcvxnsp.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJucGN6Ymxpa21xd2NsY3Z4bnNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MzAxODgsImV4cCI6MjA5MzEwNjE4OH0.UZIkJeCsLcoEPU_ihwhhiPAtbv_bLJrhmOHSdwosRWM'; // anon public key
-
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJucGN6Ymxpa21xd2NsY3Z4bnNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MzAxODgsImV4cCI6MjA5MzEwNjE4OH0.UZIkJeCsLcoEPU_ihwhhiPAtbv_bLJrhmOHSdwosRWM';
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -1554,7 +1573,6 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 let state = {
   loggedIn: false,
   user:     null,
-  token:    null,
   darkMode: false,
   catTab:   'santri',
   sppTab:   'santri',
@@ -1576,41 +1594,43 @@ const MONTHS      = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt'
 const MONTHS_FULL = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
 // ==========================================
-// LOCAL STORAGE & CACHE
+// LOCAL STORAGE
 // ==========================================
-const CACHE_TTL = 2 * 60 * 1000; // 2 menit
-
 function saveLocal() {
-  const now = Date.now();
-  localStorage.setItem('df_state', JSON.stringify({
+  localStorage.setItem('df_sb', JSON.stringify({
     loggedIn:     state.loggedIn,
     user:         state.user,
     darkMode:     state.darkMode,
     cateringData: state.cateringData,
     sppData:      state.sppData,
     settings:     state.settings,
-    kelasList:    kelasList,
-    kamarList:    kamarList,
+    kelasList,
+    kamarList,
     _cacheTs:     state._cacheTs || {}
   }));
 }
 
 function loadLocal() {
   try {
-    const s = localStorage.getItem('df_state');
+    const s = localStorage.getItem('df_sb');
     if (!s) return;
     const d = JSON.parse(s);
     if (d.loggedIn !== undefined) state.loggedIn = d.loggedIn;
     if (d.user)         state.user          = d.user;
     if (d.darkMode !== undefined) state.darkMode = d.darkMode;
-    if (d.cateringData) state.cateringData  = d.cateringData;
-    if (d.sppData)      state.sppData       = d.sppData;
+    if (d.cateringData?.length) state.cateringData = d.cateringData;
+    if (d.sppData?.length)      state.sppData      = d.sppData;
     if (d.settings)     state.settings      = { ...state.settings, ...d.settings };
-    if (d.kelasList && d.kelasList.length)  kelasList = d.kelasList;
-    if (d.kamarList && d.kamarList.length)  kamarList = d.kamarList;
+    if (d.kelasList?.length) kelasList = d.kelasList;
+    if (d.kamarList?.length) kamarList = d.kamarList;
     if (d._cacheTs)     state._cacheTs      = d._cacheTs;
-  } catch(e) { localStorage.removeItem('df_state'); }
+  } catch(e) { localStorage.removeItem('df_sb'); }
 }
+
+// ==========================================
+// CACHE
+// ==========================================
+const CACHE_TTL = 2 * 60 * 1000; // 2 menit
 
 function saveCacheTs(key) {
   if (!state._cacheTs) state._cacheTs = {};
@@ -1626,24 +1646,26 @@ function isCacheValid(key) {
 function invalidateCache(key) {
   if (!state._cacheTs) state._cacheTs = {};
   if (key) state._cacheTs[key] = 0;
-  else { state._cacheTs.catering = 0; state._cacheTs.spp = 0; state._cacheTs.settings = 0; }
+  else state._cacheTs = { catering: 0, spp: 0, settings: 0 };
 }
 
 // ==========================================
-// SUPABASE API — pengganti Google Apps Script
+// SUPABASE HELPERS
 // ==========================================
+function _parseBool(v) {
+  return v === true || v === 'TRUE' || v === 'true' || v === 1;
+}
 
-// Helper: konversi row DB → format frontend
 function _rowToCatering(row) {
   return {
-    id: String(row.id),
+    id:     String(row.id),
     gender: row.gender,
-    nama:   row.nama,
+    nama:   row.nama   || '',
     bin:    row.bin    || '',
     kamar:  row.kamar  || '',
     alamat: row.alamat || '',
     months: [row.bln1,row.bln2,row.bln3,row.bln4,row.bln5,row.bln6,
-             row.bln7,row.bln8,row.bln9,row.bln10,row.bln11,row.bln12].map(v => v === true || v === 'TRUE' || v === 'true' || v === 1)
+             row.bln7,row.bln8,row.bln9,row.bln10,row.bln11,row.bln12].map(_parseBool)
   };
 }
 
@@ -1651,13 +1673,13 @@ function _rowToSpp(row) {
   return {
     id:          String(row.id),
     gender:      row.gender,
-    nama:        row.nama,
+    nama:        row.nama         || '',
     bin:         row.bin          || '',
     kelas:       row.kelas        || '',
     tahunAjaran: row.tahun_ajaran || '',
     alamat:      row.alamat       || '',
     months: [row.bln1,row.bln2,row.bln3,row.bln4,row.bln5,row.bln6,
-             row.bln7,row.bln8,row.bln9,row.bln10,row.bln11,row.bln12].map(v => v === true || v === 'TRUE' || v === 'true' || v === 1)
+             row.bln7,row.bln8,row.bln9,row.bln10,row.bln11,row.bln12].map(_parseBool)
   };
 }
 
@@ -1667,19 +1689,68 @@ function _monthsToObj(months) {
   return obj;
 }
 
+// ==========================================
+// SUPABASE API
+// ==========================================
+async function callScript(action, data = {}) {
+  switch(action) {
+    case 'login':             return sbLogin(data);
+    case 'logout':            return { success: true };
+    case 'getCatering':       return sbGetCatering();
+    case 'getSpp':            return sbGetSpp();
+    case 'getSettings':       return sbGetSettings();
+    case 'saveCatering':      return sbSaveCatering(data);
+    case 'saveSpp':           return sbSaveSpp(data);
+    case 'deleteCatering':    return sbDeleteCatering(data);
+    case 'deleteSpp':         return sbDeleteSpp(data);
+    case 'saveSettings':      return sbSaveSettings(data);
+    case 'getMonthlyFinance': return sbGetMonthlyFinance(data);
+    case 'getTotalTahunan':   return sbGetTotalTahunan(data);
+    case 'resetCentangBulan': return sbResetCentangBulan(data);
+    case 'changePassword':    return sbChangePassword(data);
+    case 'saveRekapBulanan':  return { success: false, error: 'Fitur rekap belum tersedia di versi Supabase' };
+    default: return { success: false, error: `Action '${action}' tidak dikenal` };
+  }
+}
+
+async function sbLogin({ username, password }) {
+  try {
+    const { data, error } = await sb.from('users')
+      .select('id,username,password,name,role,active')
+      .eq('username', username).eq('active', true).single();
+    if (error || !data) return { success: false, error: 'Username tidak ditemukan' };
+    if (data.password !== password) return { success: false, error: 'Password salah' };
+    return { success: true, user: { name: data.name, role: data.role, username: data.username } };
+  } catch(e) { return { success: false, error: 'Koneksi gagal: ' + e.message }; }
+}
+
 async function sbGetCatering() {
   try {
-    const { data, error } = await sb.from('catering').select('*').order('nama').range(0, 9999);
-    if (error) throw error;
-    return { success: true, data: data.map(_rowToCatering) };
+    let all = [], from = 0, batchSize = 1000;
+    while (true) {
+      const { data, error } = await sb.from('catering').select('*')
+        .order('nama').range(from, from + batchSize - 1);
+      if (error) throw error;
+      all = all.concat(data);
+      if (data.length < batchSize) break;
+      from += batchSize;
+    }
+    return { success: true, data: all.map(_rowToCatering) };
   } catch(e) { return { success: false, error: e.message }; }
 }
 
 async function sbGetSpp() {
   try {
-    const { data, error } = await sb.from('spp').select('*').order('nama').range(0, 9999);
-    if (error) throw error;
-    return { success: true, data: data.map(_rowToSpp) };
+    let all = [], from = 0, batchSize = 1000;
+    while (true) {
+      const { data, error } = await sb.from('spp').select('*')
+        .order('nama').range(from, from + batchSize - 1);
+      if (error) throw error;
+      all = all.concat(data);
+      if (data.length < batchSize) break;
+      from += batchSize;
+    }
+    return { success: true, data: all.map(_rowToSpp) };
   } catch(e) { return { success: false, error: e.message }; }
 }
 
@@ -1699,8 +1770,7 @@ async function sbGetSettings() {
       tahunAjaran:   map.tahunAjaran  || '2024/2025',
       awalTahun:     map.awalTahun    || 'Juni',
       notifikasi:    map.notifikasi   !== 'false',
-      kelasList: kl,
-      kamarList: km
+      kelasList: kl, kamarList: km
     }};
   } catch(e) { return { success: false, error: e.message }; }
 }
@@ -1708,12 +1778,9 @@ async function sbGetSettings() {
 async function sbSaveCatering({ mode, item }) {
   try {
     const row = {
-      id:     item.id || Date.now().toString(),
-      gender: item.gender,
-      nama:   item.nama,
-      bin:    item.bin    || '',
-      kamar:  item.kamar  || '',
-      alamat: item.alamat || '',
+      id: item.id || Date.now().toString(),
+      gender: item.gender, nama: item.nama,
+      bin: item.bin||'', kamar: item.kamar||'', alamat: item.alamat||'',
       ..._monthsToObj(item.months)
     };
     const { error } = mode === 'add'
@@ -1727,13 +1794,10 @@ async function sbSaveCatering({ mode, item }) {
 async function sbSaveSpp({ mode, item }) {
   try {
     const row = {
-      id:           item.id || Date.now().toString(),
-      gender:       item.gender,
-      nama:         item.nama,
-      bin:          item.bin          || '',
-      kelas:        item.kelas        || '',
-      tahun_ajaran: item.tahunAjaran  || '',
-      alamat:       item.alamat       || '',
+      id: item.id || Date.now().toString(),
+      gender: item.gender, nama: item.nama,
+      bin: item.bin||'', kelas: item.kelas||'',
+      tahun_ajaran: item.tahunAjaran||'', alamat: item.alamat||'',
       ..._monthsToObj(item.months)
     };
     const { error } = mode === 'add'
@@ -1763,8 +1827,7 @@ async function sbDeleteSpp({ id }) {
 async function sbSaveSettings({ settings }) {
   try {
     const rows = Object.entries(settings).map(([key, value]) => ({
-      key,
-      value: typeof value === 'object' ? JSON.stringify(value) : String(value)
+      key, value: typeof value === 'object' ? JSON.stringify(value) : String(value)
     }));
     const { error } = await sb.from('settings').upsert(rows, { onConflict: 'key' });
     if (error) throw error;
@@ -1773,66 +1836,58 @@ async function sbSaveSettings({ settings }) {
 }
 
 async function sbGetMonthlyFinance({ bulan }) {
-  try {
-    const blnIdx = bulan - 1;
-    const tarifSpp      = state.settings.tarifSpp      || 0;
-    const tarifCatering = state.settings.tarifCatering || 0;
-    const tahun         = new Date().getFullYear();
+  const blnIdx        = bulan - 1;
+  const tarifSpp      = state.settings.tarifSpp      || 0;
+  const tarifCatering = state.settings.tarifCatering || 0;
+  const tahun         = new Date().getFullYear();
 
-    let sppBayar = 0, sppBelum = 0;
-    const sppDetail = [];
-    state.sppData.forEach(row => {
-      const sudah = row.months[blnIdx] === true;
-      if (sudah) { sppBayar++; sppDetail.push({ nama: row.nama, bin: row.bin, gender: row.gender, kelas: row.kelas, status: 'lunas' }); }
-      else        { sppBelum++; sppDetail.push({ nama: row.nama, bin: row.bin, gender: row.gender, kelas: row.kelas, status: 'belum' }); }
-    });
+  let sppBayar = 0, sppBelum = 0;
+  const sppDetail = [];
+  state.sppData.forEach(r => {
+    const lunas = r.months[blnIdx] === true;
+    if (lunas) { sppBayar++;  sppDetail.push({ nama:r.nama, bin:r.bin, gender:r.gender, kelas:r.kelas,  status:'lunas' }); }
+    else        { sppBelum++; sppDetail.push({ nama:r.nama, bin:r.bin, gender:r.gender, kelas:r.kelas,  status:'belum' }); }
+  });
 
-    let catBayar = 0, catBelum = 0;
-    const catDetail = [];
-    state.cateringData.forEach(row => {
-      const sudah = row.months[blnIdx] === true;
-      if (sudah) { catBayar++; catDetail.push({ nama: row.nama, bin: row.bin, gender: row.gender, kamar: row.kamar, status: 'lunas' }); }
-      else        { catBelum++; catDetail.push({ nama: row.nama, bin: row.bin, gender: row.gender, kamar: row.kamar, status: 'belum' }); }
-    });
+  let catBayar = 0, catBelum = 0;
+  const catDetail = [];
+  state.cateringData.forEach(r => {
+    const lunas = r.months[blnIdx] === true;
+    if (lunas) { catBayar++;  catDetail.push({ nama:r.nama, bin:r.bin, gender:r.gender, kamar:r.kamar, status:'lunas' }); }
+    else        { catBelum++; catDetail.push({ nama:r.nama, bin:r.bin, gender:r.gender, kamar:r.kamar, status:'belum' }); }
+  });
 
-    return { success: true, data: {
-      bulan, tahun,
-      namaBulan: MONTHS_FULL[blnIdx],
-      spp: {
-        bayar: sppBayar, belum: sppBelum, total: sppBayar + sppBelum,
-        masuk: sppBayar * tarifSpp, sisaBelum: sppBelum * tarifSpp,
-        tarif: tarifSpp, detail: sppDetail
-      },
-      catering: {
-        bayar: catBayar, belum: catBelum, total: catBayar + catBelum,
-        masuk: catBayar * tarifCatering, sisaBelum: catBelum * tarifCatering,
-        tarif: tarifCatering, detail: catDetail
-      },
-      totalMasuk: (sppBayar * tarifSpp) + (catBayar * tarifCatering),
-      totalBelum: (sppBelum * tarifSpp) + (catBelum * tarifCatering)
-    }};
-  } catch(e) { return { success: false, error: e.message }; }
+  return { success: true, data: {
+    bulan, tahun, namaBulan: MONTHS_FULL[blnIdx],
+    spp: {
+      bayar: sppBayar, belum: sppBelum, total: sppBayar + sppBelum,
+      masuk: sppBayar * tarifSpp, sisaBelum: sppBelum * tarifSpp,
+      tarif: tarifSpp, detail: sppDetail
+    },
+    catering: {
+      bayar: catBayar, belum: catBelum, total: catBayar + catBelum,
+      masuk: catBayar * tarifCatering, sisaBelum: catBelum * tarifCatering,
+      tarif: tarifCatering, detail: catDetail
+    },
+    totalMasuk: (sppBayar * tarifSpp) + (catBayar * tarifCatering),
+    totalBelum: (sppBelum * tarifSpp) + (catBelum * tarifCatering)
+  }};
 }
 
 async function sbGetTotalTahunan({ tahun }) {
-  try {
-    const tarifSpp      = state.settings.tarifSpp      || 0;
-    const tarifCatering = state.settings.tarifCatering || 0;
-    let totalSpp = 0, totalCatering = 0, bulanAktif = 0;
-    for (let b = 1; b <= 12; b++) {
-      const idx       = b - 1;
-      const sppBayar  = state.sppData.filter(r => r.months[idx] === true).length;
-      const catBayar  = state.cateringData.filter(r => r.months[idx] === true).length;
-      const masuk     = (sppBayar * tarifSpp) + (catBayar * tarifCatering);
-      if (masuk > 0) bulanAktif++;
-      totalSpp      += sppBayar * tarifSpp;
-      totalCatering += catBayar * tarifCatering;
-    }
-    return { success: true, data: {
-      tahun, totalSpp, totalCatering,
-      totalMasuk: totalSpp + totalCatering, bulanAktif
-    }};
-  } catch(e) { return { success: false, error: e.message }; }
+  const tarifSpp      = state.settings.tarifSpp      || 0;
+  const tarifCatering = state.settings.tarifCatering || 0;
+  let totalSpp = 0, totalCatering = 0, bulanAktif = 0;
+  for (let b = 1; b <= 12; b++) {
+    const idx      = b - 1;
+    const sppBayar = state.sppData.filter(r => r.months[idx] === true).length;
+    const catBayar = state.cateringData.filter(r => r.months[idx] === true).length;
+    const masuk    = (sppBayar * tarifSpp) + (catBayar * tarifCatering);
+    if (masuk > 0) bulanAktif++;
+    totalSpp      += sppBayar * tarifSpp;
+    totalCatering += catBayar * tarifCatering;
+  }
+  return { success: true, data: { tahun, totalSpp, totalCatering, totalMasuk: totalSpp + totalCatering, bulanAktif }};
 }
 
 async function sbResetCentangBulan({ resetSpp, resetCat }) {
@@ -1840,11 +1895,11 @@ async function sbResetCentangBulan({ resetSpp, resetCat }) {
     const blnObj = {};
     for (let i = 1; i <= 12; i++) blnObj[`bln${i}`] = false;
     if (resetCat) {
-      const { error } = await sb.from('catering').update(blnObj).neq('id', '');
+      const { error } = await sb.from('catering').update(blnObj).neq('id','');
       if (error) throw error;
     }
     if (resetSpp) {
-      const { error } = await sb.from('spp').update(blnObj).neq('id', '');
+      const { error } = await sb.from('spp').update(blnObj).neq('id','');
       if (error) throw error;
     }
     const parts = [resetSpp && 'SPP', resetCat && 'Catering'].filter(Boolean).join(' & ');
@@ -1852,59 +1907,19 @@ async function sbResetCentangBulan({ resetSpp, resetCat }) {
   } catch(e) { return { success: false, error: e.message }; }
 }
 
-async function sbChangePassword({ username, oldPassword, newPassword }) {
+async function sbChangePassword({ oldPassword, newPassword }) {
   try {
-    // Cek password lama dulu
-    const { data: users, error: fetchErr } = await sb
-      .from('users').select('id,password').eq('username', username).single();
-    if (fetchErr || !users) throw new Error('User tidak ditemukan');
-    if (users.password !== oldPassword) return { success: false, error: 'Password lama salah' };
-    const { error } = await sb.from('users').update({ password: newPassword }).eq('username', username);
-    if (error) throw error;
+    const { data, error } = await sb.from('users')
+      .select('id,password').eq('username', state.user.username).single();
+    if (error || !data) return { success: false, error: 'User tidak ditemukan' };
+    if (data.password !== oldPassword) return { success: false, error: 'Password lama salah' };
+    const { error: e2 } = await sb.from('users').update({ password: newPassword }).eq('username', state.user.username);
+    if (e2) throw e2;
     return { success: true };
   } catch(e) { return { success: false, error: e.message }; }
 }
 
 // ==========================================
-// callScript — semua action ke Supabase
-// ==========================================
-async function callScript(action, data = {}) {
-  switch (action) {
-    case 'login':           return sbLogin(data);
-    case 'logout':          return { success: true }; // no-op, pakai localStorage
-    case 'getCatering':     return sbGetCatering();
-    case 'getSpp':          return sbGetSpp();
-    case 'getSettings':     return sbGetSettings();
-    case 'saveCatering':    return sbSaveCatering(data);
-    case 'saveSpp':         return sbSaveSpp(data);
-    case 'deleteCatering':  return sbDeleteCatering(data);
-    case 'deleteSpp':       return sbDeleteSpp(data);
-    case 'saveSettings':    return sbSaveSettings(data);
-    case 'getMonthlyFinance': return sbGetMonthlyFinance(data);
-    case 'getTotalTahunan': return sbGetTotalTahunan(data);
-    case 'resetCentangBulan': return sbResetCentangBulan(data);
-    case 'changePassword':  return sbChangePassword(data);
-    default: return { success: false, error: `Action '${action}' tidak dikenal` };
-  }
-}
-
-// ==========================================
-// AUTH — Login pakai tabel users Supabase
-// ==========================================
-async function sbLogin({ username, password }) {
-  try {
-    const { data, error } = await sb
-      .from('users')
-      .select('id,username,password,name,role,active')
-      .eq('username', username)
-      .eq('active', true)
-      .single();
-    if (error || !data) return { success: false, error: 'Username tidak ditemukan' };
-    if (data.password !== password) return { success: false, error: 'Password salah' };
-    return { success: true, user: { name: data.name, role: data.role, username: data.username } };
-  } catch(e) { return { success: false, error: 'Koneksi gagal: ' + e.message }; }
-}
-
 // AUTH
 // ==========================================
 function togglePassword() {
@@ -1915,8 +1930,8 @@ function togglePassword() {
 async function doLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
-  const errEl = document.getElementById('login-error');
-  const btnText = document.getElementById('btn-login-text');
+  const errEl    = document.getElementById('login-error');
+  const btnText  = document.getElementById('btn-login-text');
 
   if (!username || !password) {
     errEl.textContent = 'Username dan password harus diisi';
@@ -1933,8 +1948,8 @@ async function doLogin() {
 
   if (res.success) {
     state.user     = res.user;
-    state.token    = null; // Supabase tidak pakai token manual
     state.loggedIn = true;
+    invalidateCache();
     saveLocal();
     enterApp();
   } else {
@@ -1947,39 +1962,43 @@ function enterApp() {
   document.getElementById('screen-login').classList.remove('active');
   document.getElementById('screen-main').classList.add('active');
   updateProfileUI();
-  invalidateCache(); // selalu fetch fresh dari Supabase saat login
+  state.cateringData = [];
+  state.sppData = [];
+  invalidateCache();
   loadAllData(true);
   resetAutoLogout();
 }
 
 function confirmLogout() {
-  document.getElementById('confirm-text').textContent = 'Anda akan keluar dan semua data lokal (cache) di perangkat ini akan dihapus. Data di Supabase tetap aman. Lanjutkan?';
+  document.getElementById('confirm-text').textContent = 'Anda akan keluar. Data di Supabase tetap aman. Lanjutkan?';
   document.getElementById('btn-confirm-yes').onclick = doLogout;
   document.getElementById('confirm-dialog').classList.add('show');
   closeDropdown();
 }
 
-
-function clearCacheAndReload() {
-  closeDropdown();
-  localStorage.removeItem('df_state');
-  invalidateCache();
-  state.cateringData = [];
-  state.sppData = [];
-  showToast('Cache dihapus, mengambil data terbaru...', 'success');
-  loadAllData(true);
-}
-
 function doLogout() {
   clearTimeout(autoLogoutTimer);
   closeConfirm();
+  state.loggedIn = false;
   state.user     = null;
-  state.token    = null;
-  localStorage.removeItem('df_state');
+  state.cateringData = [];
+  state.sppData = [];
+  invalidateCache();
+  localStorage.removeItem('df_sb');
   document.getElementById('screen-main').classList.remove('active');
   document.getElementById('screen-login').classList.add('active');
   document.getElementById('login-username').value = '';
   document.getElementById('login-password').value = '';
+}
+
+function clearCacheAndReload() {
+  closeDropdown();
+  state.cateringData = [];
+  state.sppData = [];
+  invalidateCache();
+  localStorage.removeItem('df_sb');
+  showToast('Cache dihapus, mengambil data terbaru...', 'success');
+  loadAllData(true);
 }
 
 // ==========================================
@@ -1988,31 +2007,26 @@ function doLogout() {
 let currentPage = 'dashboard';
 
 function switchPage(page) {
-  // Animasi: hide semua dulu, lalu show yg baru
   document.querySelectorAll('.page').forEach(p => {
     p.classList.remove('active');
-    // Reset animasi supaya re-trigger saat kembali ke page yg sama
     p.style.animation = 'none';
   });
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-
   const target = document.getElementById('page-' + page);
   if (target) {
-    // Force reflow supaya animasi berjalan ulang
     target.style.animation = 'none';
-    target.offsetHeight; // trigger reflow
+    target.offsetHeight;
     target.style.animation = '';
     target.classList.add('active');
   }
   const navEl = document.getElementById('nav-' + page);
   if (navEl) navEl.classList.add('active');
-
   currentPage = page;
   closeDropdown();
   const titles = { dashboard: 'Dashboard', catering: 'Catering', spp: 'SPP', setting: 'Setting' };
   document.getElementById('header-title').textContent = titles[page] || page;
-  if (page === 'catering') renderCateringTable();
-  if (page === 'spp') renderSppTable();
+  if (page === 'catering')  renderCateringTable();
+  if (page === 'spp')       renderSppTable();
   if (page === 'dashboard') updateDashboard();
   document.getElementById('main-content').scrollTop = 0;
 }
@@ -2020,14 +2034,10 @@ function switchPage(page) {
 // ==========================================
 // DROPDOWN
 // ==========================================
-function toggleDropdown() {
-  document.getElementById('dropdown-menu').classList.toggle('show');
-}
-function closeDropdown() {
-  document.getElementById('dropdown-menu').classList.remove('show');
-}
+function toggleDropdown() { document.getElementById('dropdown-menu').classList.toggle('show'); }
+function closeDropdown()   { document.getElementById('dropdown-menu').classList.remove('show'); }
 document.addEventListener('click', (e) => {
-  const dd = document.getElementById('dropdown-menu');
+  const dd  = document.getElementById('dropdown-menu');
   const btn = document.getElementById('btn-more');
   if (dd && !dd.contains(e.target) && !btn.contains(e.target)) closeDropdown();
 });
@@ -2037,9 +2047,7 @@ document.addEventListener('click', (e) => {
 // ==========================================
 function toggleDarkMode() {
   state.darkMode = !state.darkMode;
-  applyDarkMode();
-  saveLocal();
-  closeDropdown();
+  applyDarkMode(); saveLocal(); closeDropdown();
 }
 
 function applyDarkMode() {
@@ -2060,67 +2068,53 @@ function applyDarkMode() {
 // DATA LOADING
 // ==========================================
 async function loadAllData(forceRefresh = false) {
-  // Animasi icon refresh saat loading
   const refreshIcon = document.getElementById('refresh-icon');
   const cacheEl     = document.getElementById('cache-indicator');
   if (refreshIcon) refreshIcon.style.animation = 'spin 0.8s linear infinite';
-  if (cacheEl && forceRefresh) cacheEl.textContent = '🔄 Mengambil data terbaru...';
+  if (cacheEl)     cacheEl.textContent = forceRefresh ? '🔄 Mengambil data terbaru...' : '🔄 Memuat...';
 
   const needCatering = forceRefresh || !isCacheValid('catering') || !state.cateringData.length;
   const needSpp      = forceRefresh || !isCacheValid('spp')      || !state.sppData.length;
   const needSettings = forceRefresh || !isCacheValid('settings');
 
-  // Kalau semua cache masih valid, langsung render tanpa fetch
   if (!needCatering && !needSpp && !needSettings) {
-    updateDashboard();
-    renderCateringTable();
-    renderSppTable();
-    updateSettingsUI();
-    showCacheIndicator();
-    return;
+    updateDashboard(); renderCateringTable(); renderSppTable(); updateSettingsUI();
+    showCacheIndicator(); return;
   }
 
-  // Fetch hanya yang perlu
   const promises = [];
-  if (needCatering) promises.push(callScript('getCatering').then(r => ({ key: 'catering', r })));
-  if (needSpp)      promises.push(callScript('getSpp').then(r => ({ key: 'spp', r })));
-  if (needSettings) promises.push(callScript('getSettings').then(r => ({ key: 'settings', r })));
+  if (needCatering) promises.push(callScript('getCatering').then(r => ({ key:'catering', r })));
+  if (needSpp)      promises.push(callScript('getSpp')     .then(r => ({ key:'spp',      r })));
+  if (needSettings) promises.push(callScript('getSettings').then(r => ({ key:'settings', r })));
 
   const results = await Promise.all(promises);
 
   results.forEach(({ key, r }) => {
-    if (!r.success) return;
+    if (!r.success) { showToast('Gagal load ' + key + ': ' + r.error, 'error'); return; }
     if (key === 'catering') { state.cateringData = r.data; saveCacheTs('catering'); }
-    if (key === 'spp')      { state.sppData = r.data;      saveCacheTs('spp'); }
+    if (key === 'spp')      { state.sppData      = r.data; saveCacheTs('spp'); }
     if (key === 'settings') {
-      const sd = r.data;
-      state.settings = { ...state.settings, ...sd };
-      if (sd.kelasList && sd.kelasList.length) kelasList = sd.kelasList;
-      if (sd.kamarList && sd.kamarList.length) kamarList = sd.kamarList;
+      state.settings = { ...state.settings, ...r.data };
+      if (r.data.kelasList?.length) kelasList = r.data.kelasList;
+      if (r.data.kamarList?.length) kamarList = r.data.kamarList;
       saveCacheTs('settings');
     }
   });
 
-  updateDashboard();
-  renderCateringTable();
-  renderSppTable();
-  updateSettingsUI();
+  updateDashboard(); renderCateringTable(); renderSppTable(); updateSettingsUI();
   showCacheIndicator();
 }
 
-// Tampilkan indikator kecil kapan terakhir data diambil dari server
 function showCacheIndicator() {
   const ts = state._cacheTs;
   if (!ts) return;
-  const oldest = Math.min(ts.catering || 0, ts.spp || 0, ts.settings || 0);
+  const oldest = Math.min(ts.catering||0, ts.spp||0, ts.settings||0);
   if (!oldest) return;
   const selisih = Date.now() - oldest;
   const menit   = Math.floor(selisih / 60000);
   const detik   = Math.floor((selisih % 60000) / 1000);
-  const label   = menit === 0
-    ? (detik < 5 ? 'Baru saja' : `${detik} detik lalu`)
-    : menit < 60 ? `${menit} menit lalu`
-    : 'Lebih dari 1 jam lalu';
+  const label   = menit === 0 ? (detik < 5 ? 'Baru saja' : `${detik} detik lalu`)
+                : menit < 60  ? `${menit} menit lalu` : 'Lebih dari 1 jam lalu';
   const el = document.getElementById('cache-indicator');
   if (el) el.textContent = '🕐 Data: ' + label;
   const icon = document.getElementById('refresh-icon');
@@ -2128,58 +2122,46 @@ function showCacheIndicator() {
 }
 
 // ==========================================
-// DASHBOARD
+// DASHBOARD — hitung dari sppData
 // ==========================================
 function updateDashboard() {
-  // Gunakan sppData sebagai sumber utama jumlah santri (data lebih lengkap)
-  const sppSantri     = state.sppData.filter(x => x.gender === 'santri').length;
-  const sppSantriwati = state.sppData.filter(x => x.gender === 'santriwati').length;
-  const sppTotal      = sppSantri + sppSantriwati;
-
-  // Catering sebagai pembanding, ambil yang lebih besar
-  const catSantri     = state.cateringData.filter(x => x.gender === 'santri').length;
-  const catSantriwati = state.cateringData.filter(x => x.gender === 'santriwati').length;
-
-  const displaySantri     = Math.max(sppSantri, catSantri);
-  const displaySantriwati = Math.max(sppSantriwati, catSantriwati);
+  // Santri/wati dihitung dari sppData (data lebih lengkap)
+  const displaySantri     = state.sppData.filter(x => x.gender === 'santri').length;
+  const displaySantriwati = state.sppData.filter(x => x.gender === 'santriwati').length;
   const displayTotal      = displaySantri + displaySantriwati;
 
-  document.getElementById('stat-santri').textContent = displaySantri;
+  document.getElementById('stat-santri').textContent     = displaySantri;
   document.getElementById('stat-santriwati').textContent = displaySantriwati;
-  document.getElementById('stat-total').textContent = displayTotal;
-  document.getElementById('summary-total').textContent = displayTotal + ' santri';
+  document.getElementById('stat-total').textContent      = displayTotal;
+  document.getElementById('summary-total').textContent   = displayTotal + ' santri';
 
   const s = state.settings;
   document.getElementById('summary-catering').textContent = 'Rp ' + formatRp(s.tarifCatering);
-  document.getElementById('summary-spp').textContent = 'Rp ' + formatRp(s.tarifSpp);
+  document.getElementById('summary-spp').textContent      = 'Rp ' + formatRp(s.tarifSpp);
 
   // Donut chart
   const circumference = 2 * Math.PI * 65;
   if (displayTotal > 0) {
-    const santriLen = circumference * (displaySantri / displayTotal);
+    const santriLen     = circumference * (displaySantri / displayTotal);
     const santriwatiLen = circumference * (displaySantriwati / displayTotal);
     const ds  = document.getElementById('donut-santri');
     const dsw = document.getElementById('donut-santriwati');
-    ds.setAttribute('stroke-dasharray',  `${santriLen} ${circumference - santriLen}`);
-    ds.setAttribute('stroke-dashoffset', '0');
-    dsw.setAttribute('stroke-dasharray',  `${santriwatiLen} ${circumference - santriwatiLen}`);
-    dsw.setAttribute('stroke-dashoffset', `${-santriLen}`);
+    if (ds)  { ds.setAttribute('stroke-dasharray',  `${santriLen} ${circumference - santriLen}`); ds.setAttribute('stroke-dashoffset','0'); }
+    if (dsw) { dsw.setAttribute('stroke-dasharray', `${santriwatiLen} ${circumference - santriwatiLen}`); dsw.setAttribute('stroke-dashoffset',`${-santriLen}`); }
   }
-  document.getElementById('donut-total-text').textContent = displayTotal;
+  const el = document.getElementById('donut-total-text');
+  if (el) el.textContent = displayTotal;
   const sP  = displayTotal > 0 ? Math.round(displaySantri / displayTotal * 100) : 0;
   const swP = 100 - sP;
-  document.getElementById('legend-santri').textContent     = `${displaySantri} (${sP}%)`;
-  document.getElementById('legend-santriwati').textContent = `${displaySantriwati} (${swP}%)`;
+  const ls = document.getElementById('legend-santri');
+  const lw = document.getElementById('legend-santriwati');
+  if (ls) ls.textContent = `${displaySantri} (${sP}%)`;
+  if (lw) lw.textContent = `${displaySantriwati} (${swP}%)`;
 
-  // Finance dashboard — init hanya sekali, refresh setiap update
   if (!financeView.bulan) initFinanceView();
   loadFinanceDashboard();
   loadTotalTahun();
 }
-
-// ==========================================
-// TOTAL UANG MASUK TAHUN INI
-// ==========================================
 async function loadTotalTahun() {
   const tahun = new Date().getFullYear();
   const elNum = document.getElementById('stat-total-tahun');
@@ -2420,9 +2402,113 @@ function switchCatTab(tab) {
   renderCateringTable();
 }
 
+// ==========================================
+// FILTER STATE
+// ==========================================
+let catFilter  = { kamar: '', status: 'semua' };
+let sppFilter  = { kelas: '', status: 'semua' };
+
+function toggleFilter(type) {
+  const panel = document.getElementById('filter-panel-' + type);
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen) {
+    if (type === 'catering') renderFilterKamarBtns();
+    if (type === 'spp')      renderFilterKelasBtns();
+  }
+  // Highlight tombol filter kalau ada filter aktif
+  const btn = document.getElementById('btn-filter-' + type);
+  const aktif = type === 'catering'
+    ? (catFilter.kamar !== '' || catFilter.status !== 'semua')
+    : (sppFilter.kelas !== '' || sppFilter.status !== 'semua');
+  if (btn) btn.style.background = aktif ? 'var(--primary-light)' : '';
+}
+
+function renderFilterKamarBtns() {
+  const wrap = document.getElementById('filter-kamar-btns');
+  if (!wrap) return;
+  const allKamar = ['', ...new Set(state.cateringData.map(x => x.kamar).filter(Boolean).sort())];
+  wrap.innerHTML = allKamar.map(k => {
+    const label = k || 'Semua';
+    const active = catFilter.kamar === k;
+    return `<button class="tab-btn ${active?'active':''}" onclick="setCatKamarFilter('${k}')" style="font-size:11px;padding:4px 10px">${label}</button>`;
+  }).join('');
+}
+
+function renderFilterKelasBtns() {
+  const wrap = document.getElementById('filter-kelas-btns');
+  if (!wrap) return;
+  const allKelas = ['', ...new Set(state.sppData.map(x => x.kelas).filter(Boolean).sort())];
+  wrap.innerHTML = allKelas.map(k => {
+    const label = k || 'Semua';
+    const active = sppFilter.kelas === k;
+    return `<button class="tab-btn ${active?'active':''}" onclick="setSppKelasFilter('${k.replace(/'/g,"\\'")}')"
+      style="font-size:11px;padding:4px 10px">${label}</button>`;
+  }).join('');
+}
+
+function setCatKamarFilter(val) {
+  catFilter.kamar = val;
+  renderFilterKamarBtns();
+  _updateFilterBtn('catering');
+  renderCateringTable();
+}
+
+function setCatStatusFilter(val) {
+  catFilter.status = val;
+  ['semua','lunas','belum'].forEach(v => {
+    const el = document.getElementById('fcat-' + v);
+    if (el) el.classList.toggle('active', v === val);
+  });
+  _updateFilterBtn('catering');
+  renderCateringTable();
+}
+
+function setSppKelasFilter(val) {
+  sppFilter.kelas = val;
+  renderFilterKelasBtns();
+  _updateFilterBtn('spp');
+  renderSppTable();
+}
+
+function setSppStatusFilter(val) {
+  sppFilter.status = val;
+  ['semua','lunas','belum'].forEach(v => {
+    const el = document.getElementById('fspp-' + v);
+    if (el) el.classList.toggle('active', v === val);
+  });
+  _updateFilterBtn('spp');
+  renderSppTable();
+}
+
+function _updateFilterBtn(type) {
+  const btn = document.getElementById('btn-filter-' + type);
+  if (!btn) return;
+  const aktif = type === 'catering'
+    ? (catFilter.kamar !== '' || catFilter.status !== 'semua')
+    : (sppFilter.kelas !== '' || sppFilter.status !== 'semua');
+  btn.style.background = aktif ? 'var(--primary-light)' : '';
+  btn.style.color      = aktif ? 'var(--primary)' : '';
+}
+
+function _applyStatusFilter(rows, type) {
+  const now     = new Date();
+  const blnIdx  = now.getMonth(); // 0-based
+  const status  = type === 'catering' ? catFilter.status : sppFilter.status;
+  if (status === 'semua') return rows;
+  return rows.filter(r => {
+    const lunas = r.months?.[blnIdx] === true;
+    return status === 'lunas' ? lunas : !lunas;
+  });
+}
+
+
 function renderCateringTable() {
   const q = (document.getElementById('cat-search')?.value || '').toLowerCase();
-  const data = state.cateringData.filter(x => x.gender === catCurrentTab);
+  let data = state.cateringData.filter(x => x.gender === catCurrentTab);
+  if (catFilter.kamar) data = data.filter(x => x.kamar === catFilter.kamar);
+  data = _applyStatusFilter(data, 'catering');
   const filtered = q ? data.filter(x =>
     (x.nama||'').toLowerCase().includes(q) ||
     (x.bin||'').toLowerCase().includes(q) ||
@@ -2444,8 +2530,10 @@ function renderCateringTable() {
     return `<tr>
       <td>${i+1}</td>
       <td onclick="openEditModal('catering','${row.id}')" style="cursor:pointer">
-        <strong style="color:var(--primary)">${row.nama||''}</strong>
-        <div style="font-size:10px;color:var(--text-muted);margin-top:1px">${catCurrentTab==='santri'?'bin':'binti'} ${row.bin||''}</div>
+        <div style="display:flex;align-items:baseline;gap:5px;flex-wrap:wrap">
+          <strong style="color:var(--primary)">${row.nama||''}</strong>
+          <span style="font-size:10px;color:var(--text-muted);white-space:nowrap">${catCurrentTab==='santri'?'bin':'binti'} ${row.bin||''}</span>
+        </div>
       </td>
       <td class="small">${row.kamar||''}</td>
       <td class="small">${row.alamat||''}</td>
@@ -2479,7 +2567,9 @@ function switchSppTab(tab) {
 
 function renderSppTable() {
   const q = (document.getElementById('spp-search')?.value || '').toLowerCase();
-  const data = state.sppData.filter(x => x.gender === sppCurrentTab);
+  let data = state.sppData.filter(x => x.gender === sppCurrentTab);
+  if (sppFilter.kelas) data = data.filter(x => x.kelas === sppFilter.kelas);
+  data = _applyStatusFilter(data, 'spp');
   const filtered = q ? data.filter(x =>
     (x.nama||'').toLowerCase().includes(q) ||
     (x.bin||'').toLowerCase().includes(q) ||
@@ -2502,8 +2592,10 @@ function renderSppTable() {
     return `<tr>
       <td>${i+1}</td>
       <td onclick="openEditModal('spp','${row.id}')" style="cursor:pointer">
-        <strong style="color:var(--primary)">${row.nama||''}</strong>
-        <div style="font-size:10px;color:var(--text-muted);margin-top:1px">${binLabel} ${row.bin||''}</div>
+        <div style="display:flex;align-items:baseline;gap:5px;flex-wrap:wrap">
+          <strong style="color:var(--primary)">${row.nama||''}</strong>
+          <span style="font-size:10px;color:var(--text-muted);white-space:nowrap">${binLabel} ${row.bin||''}</span>
+        </div>
       </td>
       <td class="small">${row.kelas||''}</td>
       <td class="small">${row.tahunAjaran||state.settings.tahunAjaran}</td>
@@ -3036,6 +3128,7 @@ function resetAutoLogout() {
   if (state.loggedIn) {
     autoLogoutTimer = setTimeout(() => {
       if (state.loggedIn) {
+        
         showToast('Sesi berakhir. Silakan login kembali.', 'error');
         setTimeout(() => doLogout(), 1500);
       }
