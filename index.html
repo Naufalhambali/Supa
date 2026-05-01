@@ -507,6 +507,15 @@ input, select, textarea { font-family: inherit; outline: none; border: none; }
 .search-wrap svg { width: 16px; height: 16px; color: var(--text-muted); flex-shrink: 0; }
 .search-wrap input { flex: 1; background: none; color: var(--text-primary); font-size: 14px; }
 .search-wrap input::placeholder { color: var(--text-muted); }
+.btn-clear-search {
+  background: var(--text-muted);
+  border: none; border-radius: 50%;
+  width: 18px; height: 18px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: white;
+  transition: background 0.15s;
+  padding: 0;
+}
 .btn-filter {
   background: var(--card); border: 1.5px solid var(--card-border);
   border-radius: 12px; padding: 10px 12px;
@@ -1032,7 +1041,10 @@ body.modal-open { overflow: hidden; }
         <div class="search-row">
           <div class="search-wrap">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <input type="text" placeholder="Cari nama, bin, atau kamar..." id="cat-search" oninput="renderCateringTable()">
+            <input type="text" placeholder="Cari nama, bin, atau kamar..." id="cat-search" oninput="renderCateringTable();toggleClearBtn('cat-search','cat-clear')">
+            <button class="btn-clear-search" id="cat-clear" onclick="clearSearch('cat-search','cat-clear',renderCateringTable)" style="display:none">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
           </div>
           <button class="btn-filter" id="btn-filter-catering" onclick="toggleFilter('catering')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg></button>
         </div>
@@ -1079,7 +1091,10 @@ body.modal-open { overflow: hidden; }
         <div class="search-row">
           <div class="search-wrap">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <input type="text" placeholder="Cari nama, bin, binti, atau kelas..." id="spp-search" oninput="renderSppTable()">
+            <input type="text" placeholder="Cari nama, bin, binti, atau kelas..." id="spp-search" oninput="renderSppTable();toggleClearBtn('spp-search','spp-clear')">
+            <button class="btn-clear-search" id="spp-clear" onclick="clearSearch('spp-search','spp-clear',renderSppTable)" style="display:none">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
           </div>
           <button class="btn-filter" id="btn-filter-spp" onclick="toggleFilter('spp')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z"/></svg></button>
         </div>
@@ -2529,13 +2544,13 @@ function renderCateringTable() {
     const monthsHtml = months.map((m, idx) => `<div class="month-check ${m?'checked':''}">${MONTH_LABELS[idx]}</div>`).join('');
     return `<tr>
       <td>${i+1}</td>
-      <td onclick="openEditModal('catering','${row.id}')" style="cursor:pointer">
-        <div style="display:flex;align-items:baseline;gap:5px;flex-wrap:wrap">
-          <strong style="color:var(--primary)">${row.nama||''}</strong>
-          <span style="font-size:10px;color:var(--text-muted);white-space:nowrap">${catCurrentTab==='santri'?'bin':'binti'} ${row.bin||''}</span>
+      <td onclick="openEditModal('catering','${row.id}')" style="cursor:pointer;max-width:160px;padding-right:4px">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <strong style="color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;display:block">${row.nama||''}</strong>
+          <span style="font-size:12px;color:var(--text-muted);white-space:nowrap">${catCurrentTab==='santri'?'bin':'binti'} ${row.bin||''}</span>
         </div>
       </td>
-      <td class="small">${row.kamar||''}</td>
+      <td class="small" style="padding-left:4px">${row.kamar||''}</td>
       <td class="small">${row.alamat||''}</td>
       <td colspan="12"><div class="month-checks">${monthsHtml}</div></td>
       <td><div class="action-btns">
@@ -2591,13 +2606,13 @@ function renderSppTable() {
     const monthsHtml = months.map((m, idx) => `<div class="month-check ${m?'checked':''}">${MONTH_LABELS_SPP[idx]}</div>`).join('');
     return `<tr>
       <td>${i+1}</td>
-      <td onclick="openEditModal('spp','${row.id}')" style="cursor:pointer">
-        <div style="display:flex;align-items:baseline;gap:5px;flex-wrap:wrap">
-          <strong style="color:var(--primary)">${row.nama||''}</strong>
-          <span style="font-size:10px;color:var(--text-muted);white-space:nowrap">${binLabel} ${row.bin||''}</span>
+      <td onclick="openEditModal('spp','${row.id}')" style="cursor:pointer;max-width:160px;padding-right:4px">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <strong style="color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;display:block">${row.nama||''}</strong>
+          <span style="font-size:12px;color:var(--text-muted);white-space:nowrap">${binLabel} ${row.bin||''}</span>
         </div>
       </td>
-      <td class="small">${row.kelas||''}</td>
+      <td class="small" style="white-space:nowrap;padding-left:4px">${row.kelas||''}</td>
       <td class="small">${row.tahunAjaran||state.settings.tahunAjaran}</td>
       <td class="small">${row.alamat||'-'}</td>
       <td colspan="12"><div class="month-checks">${monthsHtml}</div></td>
@@ -2647,9 +2662,15 @@ function renderModalForm(type, data) {
   ).join('');
 
   // Build kamar & kelas options dari state list
-  const kamarOpts = kamarList.map(k =>
+  // Jika nilai data tidak ada di list, tambahkan sementara agar tidak kosong saat edit
+  const kamarListFinal = (data?.kamar && !kamarList.includes(data.kamar))
+    ? [data.kamar, ...kamarList] : kamarList;
+  const kelasListFinal = (data?.kelas && !kelasList.includes(data.kelas))
+    ? [data.kelas, ...kelasList] : kelasList;
+
+  const kamarOpts = kamarListFinal.map(k =>
     `<option value="${k}" ${data?.kamar===k?'selected':''}>${k}</option>`).join('');
-  const kelasOpts = kelasList.map(k =>
+  const kelasOpts = kelasListFinal.map(k =>
     `<option value="${k}" ${data?.kelas===k?'selected':''}>${k}</option>`).join('');
 
   let html = `<div class="modal-form">
@@ -2704,15 +2725,17 @@ function renderModalForm(type, data) {
   document.getElementById('modal-body').innerHTML = html;
 
   // Set nilai select SETELAH innerHTML di-set
-  // (setAttribute 'selected' tidak reliable, harus set .value via JS)
-  if (type === 'catering' && data?.kamar) {
-    const selKamar = document.getElementById('f-kamar');
-    if (selKamar) selKamar.value = data.kamar;
-  }
-  if (type === 'spp' && data?.kelas) {
-    const selKelas = document.getElementById('f-kelas');
-    if (selKelas) selKelas.value = data.kelas;
-  }
+  // Gunakan requestAnimationFrame agar DOM benar-benar siap sebelum set .value
+  requestAnimationFrame(() => {
+    if (type === 'catering' && data?.kamar) {
+      const selKamar = document.getElementById('f-kamar');
+      if (selKamar) selKamar.value = data.kamar;
+    }
+    if (type === 'spp' && data?.kelas) {
+      const selKelas = document.getElementById('f-kelas');
+      if (selKelas) selKelas.value = data.kelas;
+    }
+  });
 }
 
 function toggleMonth(btn, idx) {
@@ -2722,10 +2745,7 @@ function toggleMonth(btn, idx) {
 function showModal() {
   document.getElementById('modal-overlay').classList.add('show');
   document.body.classList.add('modal-open');
-  setTimeout(() => {
-    const firstInput = document.querySelector('#modal-body input');
-    if (firstInput) firstInput.focus();
-  }, 350);
+  // Tidak auto-focus agar keyboard tidak langsung muncul saat modal dibuka
 }
 
 function closeModal() {
@@ -3591,6 +3611,21 @@ function init() {
   document.getElementById('login-password').addEventListener('keydown', e => {
     if (e.key === 'Enter') doLogin();
   });
+}
+
+function toggleClearBtn(inputId, btnId) {
+  const inp = document.getElementById(inputId);
+  const btn = document.getElementById(btnId);
+  if (!inp || !btn) return;
+  btn.style.display = inp.value.length > 0 ? 'flex' : 'none';
+}
+
+function clearSearch(inputId, btnId, renderFn) {
+  const inp = document.getElementById(inputId);
+  const btn = document.getElementById(btnId);
+  if (inp) { inp.value = ''; inp.focus(); }
+  if (btn) btn.style.display = 'none';
+  if (renderFn) renderFn();
 }
 
 init();
