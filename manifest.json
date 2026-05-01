@@ -2,7 +2,7 @@
   "name": "Pondok Pesantren Darul Falah Gambut",
   "short_name": "Darul Falah",
   "description": "Sistem Manajemen Pondok Pesantren Darul Falah Gambut",
-  "start_url": "./app.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#1a56db",
