@@ -3,49 +3,35 @@
 // ================================================================
 // Fungsi  : Semua logika JavaScript aplikasi (frontend + API)
 // Backend : Supabase (Postgres + Auth)
-// 
-// Daftar seksi:
-//   1.  SUPABASE CONFIG       → URL & API key koneksi database
-//   2.  APP STATE             → Variabel global status aplikasi
-//   3.  LOCAL STORAGE         → Simpan/muat data lokal (cache offline)
-//   4.  CACHE                 → TTL cache data agar tidak fetch berlebihan
-//   5.  SUPABASE HELPERS      → Parser baris database → objek JS
-//   6.  SUPABASE API          → Semua fungsi CRUD ke Supabase
-//   7.  AUTH                  → Login, logout, toggle password
-//   8.  NAVIGATION            → Pindah halaman, dropdown, dark mode
-//   9.  DATA LOADING          → Fetch semua data + indikator cache
-//  10.  DASHBOARD             → Hitung & render statistik dashboard
-//  11.  FINANCE VIEW          → Navigasi bulan & laporan keuangan
-//  12.  CATERING TABLE        → Render tabel catering + filter
-//  13.  SPP TABLE             → Render tabel SPP + filter
-//  14.  MODAL                 → Buka/tutup/simpan form tambah & edit
-//  15.  CONFIRM DELETE        → Dialog hapus data
-//  16.  SETTINGS & SUB PAGES  → Buka sub-halaman, simpan pengaturan
-//  17.  KELAS & KAMAR         → Manajemen daftar kelas dan kamar
-//  18.  TOAST                 → Notifikasi singkat (3 detik)
-//  19.  UTILS                 → Helper: formatRp, toTitleCase, dll
-//  20.  KEYBOARD FIX          → Perbaikan tampilan saat keyboard Android muncul
-//  21.  AUTO LOGOUT           → Logout otomatis setelah 30 menit tidak aktif
-//  22.  BACK BUTTON           → Cegah app tertutup saat tombol Back ditekan
-//  23.  LAPORAN TUNGGAKAN     → Filter & render laporan tunggakan per bulan
-//  24.  RESET CENTANG         → Reset semua centang bayar bulan ini
-//  25.  INIT                  → Inisialisasi awal saat app dibuka
 //
-// Cara mengganti koneksi Supabase:
-//   Lihat seksi 1 (SUPABASE CONFIG), ganti SUPABASE_URL dan SUPABASE_KEY
-//   dengan nilai dari project Supabase kamu.
+// Daftar seksi utama:
+//   SUPABASE CONFIG    → URL & API key koneksi database
+//   APP STATE          → Variabel global status aplikasi
+//   LOCAL STORAGE      → Simpan/muat data lokal (cache offline)
+//   CACHE              → TTL cache agar tidak fetch berlebihan
+//   SUPABASE API       → Semua fungsi CRUD ke Supabase
+//   AUTH               → Login, logout, toggle password
+//   NAVIGATION         → Pindah halaman, dropdown, dark mode
+//   DATA LOADING       → Fetch semua data + indikator cache
+//   DASHBOARD          → Hitung & render statistik dashboard
+//   CATERING TABLE     → Render tabel catering + filter
+//   SPP TABLE          → Render tabel SPP + filter
+//   MODAL              → Form tambah & edit data
+//   SETTINGS           → Simpan tarif, kelas, kamar, dll
+//   TOAST              → Notifikasi singkat (3 detik)
+//   UTILS              → Helper: formatRp, toTitleCase, dll
+//   AUTO LOGOUT        → Logout otomatis setelah 30 menit
+//   BACK BUTTON        → Cegah app tertutup tombol Back HP
+//   LAPORAN TUNGGAKAN  → Laporan tunggakan per bulan
+//   RESET CENTANG      → Reset semua centang bayar bulan ini
+//   INIT               → Inisialisasi saat app pertama dibuka
 //
-// Cara menambah halaman baru:
-//   1. Buat <div class="page" id="page-nama"> di index.html
-//   2. Tambah nav item di bottom nav
-//   3. Tambah case di fungsi switchPage() (seksi 8)
+// Cara ganti koneksi Supabase:
+//   Cari seksi SUPABASE CONFIG → ganti SUPABASE_URL dan SUPABASE_KEY
 // ================================================================
 
-// ================================================================
-// SEKSI 1: SUPABASE CONFIG
-// Ganti nilai ini dengan URL & Key dari project Supabase kamu
-// Dashboard Supabase → Settings → API
-// ================================================================
+// ==========================================
+// SUPABASE CONFIG
 // ==========================================
 const SUPABASE_URL = 'https://bnpczblikmqwclcvxnsp.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJucGN6Ymxpa21xd2NsY3Z4bnNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1MzAxODgsImV4cCI6MjA5MzEwNjE4OH0.UZIkJeCsLcoEPU_ihwhhiPAtbv_bLJrhmOHSdwosRWM';
@@ -57,12 +43,8 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY, {
   }
 });
 
-// ================================================================
-// SEKSI 2: APP STATE
-// Satu objek "state" menyimpan semua data aktif:
-//   loggedIn, user, darkMode, catTab, sppTab,
-//   cateringData[], sppData[], settings{}, modal{}
-// ================================================================
+// ==========================================
+// APP STATE
 // ==========================================
 let state = {
   loggedIn: false,
@@ -84,12 +66,8 @@ let state = {
 const MONTHS      = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
 const MONTHS_FULL = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
-// ================================================================
-// SEKSI 3: LOCAL STORAGE
-// saveLocal() → simpan state ke localStorage (df_sb)
-// loadLocal() → muat saat app pertama dibuka
-// Data tetap tersedia offline (dari cache)
-// ================================================================
+// ==========================================
+// LOCAL STORAGE
 // ==========================================
 function saveLocal() {
   localStorage.setItem('df_sb', JSON.stringify({
@@ -122,11 +100,8 @@ function loadLocal() {
   } catch(e) { localStorage.removeItem('df_sb'); }
 }
 
-// ================================================================
-// SEKSI 4: CACHE
-// TTL = 2 menit. Setelah itu, data di-fetch ulang dari Supabase
-// invalidateCache() → paksa fetch ulang semua/satu key
-// ================================================================
+// ==========================================
+// CACHE
 // ==========================================
 const CACHE_TTL = 2 * 60 * 1000; // 2 menit
 
@@ -147,11 +122,8 @@ function invalidateCache(key) {
   else state._cacheTs = { catering: 0, spp: 0, settings: 0 };
 }
 
-// ================================================================
-// SEKSI 5: SUPABASE HELPERS
-// Fungsi bantu untuk parsing baris dari Supabase ke format JS
-// _parseBool, _rowToCatering, _rowToSpp, _monthsToObj
-// ================================================================
+// ==========================================
+// SUPABASE HELPERS
 // ==========================================
 function _parseBool(v) {
   return v === true || v === 'TRUE' || v === 'true' || v === 1;
@@ -190,11 +162,8 @@ function _monthsToObj(months) {
   return obj;
 }
 
-// ================================================================
-// SEKSI 6: SUPABASE API
-// callScript(action, data) → router utama ke fungsi sb*
-// Semua fungsi sb* langsung berkomunikasi dengan Supabase
-// ================================================================
+// ==========================================
+// SUPABASE API
 // ==========================================
 async function callScript(action, data = {}) {
   switch(action) {
@@ -416,12 +385,21 @@ async function sbResetCentangBulan({ resetSpp, resetCat }) {
 
 
 
-// ================================================================
-// SEKSI 7: AUTH
-// doLogin()      → autentikasi via Supabase Auth
-// doLogout()     → sign out + bersihkan state lokal
-// togglePassword → tampilkan/sembunyikan password
-// ================================================================
+
+    if (catDetail.length > 0) {
+      const rows = catDetail.map(x => ({ ...x, rekap_id: rekapId }));
+      for (let i = 0; i < rows.length; i += 500) {
+        const { error } = await sb.from('rekap_catering').insert(rows.slice(i, i + 500));
+        if (error) throw error;
+      }
+    }
+
+    return { success: true };
+  } catch(e) { return { success: false, error: e.message }; }
+}
+
+// ==========================================
+// AUTH
 // ==========================================
 function togglePassword() {
   const inp = document.getElementById('login-password');
@@ -503,16 +481,11 @@ function clearCacheAndReload() {
   loadAllData(true);
 }
 
-// ================================================================
-// SEKSI 8: NAVIGATION
-// switchPage(page) → pindah antar halaman utama
-// toggleDropdown() → buka/tutup menu konteks
-// toggleDarkMode() → ganti tema terang/gelap
-// ================================================================
+// ==========================================
+// NAVIGATION
 // ==========================================
 let currentPage = 'dashboard';
 
-// Pindah ke halaman: 'dashboard' | 'catering' | 'spp' | 'setting'
 function switchPage(page) {
   document.querySelectorAll('.page').forEach(p => {
     p.classList.remove('active');
@@ -571,13 +544,9 @@ function applyDarkMode() {
   }
 }
 
-// ================================================================
-// SEKSI 9: DATA LOADING
-// loadAllData(forceRefresh) → fetch catering, spp, settings
-// Gunakan cache jika data masih valid (< 2 menit)
-// ================================================================
 // ==========================================
-// Fetch data dari Supabase. Set forceRefresh=true untuk bypass cache
+// DATA LOADING
+// ==========================================
 async function loadAllData(forceRefresh = false) {
   const refreshIcon = document.getElementById('refresh-icon');
   const cacheEl     = document.getElementById('cache-indicator');
@@ -632,11 +601,8 @@ function showCacheIndicator() {
   if (icon) icon.style.animation = '';
 }
 
-// ================================================================
-// SEKSI 10: DASHBOARD
-// updateDashboard() → hitung stat santri + render donut chart
-// loadTotalTahun()  → total pemasukan tahun berjalan
-// ================================================================
+// ==========================================
+// DASHBOARD — hitung dari sppData
 // ==========================================
 function updateDashboard() {
   // Santri/wati dihitung dari sppData (data lebih lengkap)
@@ -698,11 +664,6 @@ async function loadTotalTahun() {
 const NAMA_BULAN_JS = ['Januari','Februari','Maret','April','Mei','Juni',
                         'Juli','Agustus','September','Oktober','November','Desember'];
 
-// ================================================================
-// SEKSI 11: FINANCE VIEW
-// Navigasi bulan di dashboard (← bulan →)
-// loadFinanceDashboard() → tampilkan pemasukan bulan dipilih
-// ================================================================
 // State navigasi bulan keuangan
 let financeView = { bulan: 0, tahun: 0 }; // diinit saat dashboard dibuka
 
@@ -832,12 +793,8 @@ async function loadFinanceDashboard() {
 
 // Dialog konfirmasi timpa rekap — return Promise<boolean>
 
-// ================================================================
-// SEKSI 12: CATERING TABLE
-// renderCateringTable() → render ulang tabel catering
-// switchCatTab()        → ganti tab santri/santriwati
-// Filter: kamar, status bulan ini (lunas/belum/semua)
-// ================================================================
+// ==========================================
+// CATERING TABLE
 // ==========================================
 let catCurrentTab = 'santri';
 
@@ -998,12 +955,8 @@ function renderCateringTable() {
   }).join('');
 }
 
-// ================================================================
-// SEKSI 13: SPP TABLE
-// renderSppTable() → render ulang tabel SPP
-// switchSppTab()   → ganti tab santri/santriwati
-// Filter: kelas, status bulan ini (lunas/belum/semua)
-// ================================================================
+// ==========================================
+// SPP TABLE
 // ==========================================
 let sppCurrentTab = 'santri';
 
@@ -1065,13 +1018,8 @@ function renderSppTable() {
   }).join('');
 }
 
-// ================================================================
-// SEKSI 14: MODAL
-// openAddModal(type)       → buka form tambah data baru
-// openEditModal(type, id)  → buka form edit data
-// saveModal()              → simpan ke Supabase
-// toggleMonth(idx)         → centang/uncentang bulan di form
-// ================================================================
+// ==========================================
+// MODAL
 // ==========================================
 function openAddModal(type) {
   state.modal = { type, mode: 'add', editId: null };
@@ -1285,12 +1233,8 @@ async function doConfirm() {
   }
 }
 
-// ================================================================
-// SEKSI 16: SETTINGS & SUB PAGES
-// openSubPage(name)  → slide-in sub halaman
-// closeSubPage(name) → slide-out sub halaman
-// save* functions    → simpan pengaturan tarif/tahun ajaran
-// ================================================================
+// ==========================================
+// SETTINGS & SUB PAGES
 // ==========================================
 function openSubPage(name) {
   const el = document.getElementById('sub-' + name);
@@ -1301,14 +1245,6 @@ function openSubPage(name) {
   if (name === 'tarif-catering') document.getElementById('input-tarif-catering').value = state.settings.tarifCatering || '';
   if (name === 'tarif-spp') document.getElementById('input-tarif-spp').value = state.settings.tarifSpp || '';
   if (name === 'tahun-ajaran') document.getElementById('input-tahun-ajaran').value = state.settings.tahunAjaran || '';
-  if (name === 'profil') {
-    const namaEl = document.getElementById('edit-nama');
-    if (namaEl && state.user) namaEl.value = state.user.name || '';
-    const usEl = document.getElementById('info-username-display');
-    const roleEl = document.getElementById('info-role-display');
-    if (usEl && state.user) usEl.textContent = state.user.username || state.user.email || '-';
-    if (roleEl && state.user) roleEl.textContent = state.user.role || '-';
-  }
   if (name === 'data-kelas') renderKelasContent();
   if (name === 'data-kamar') renderKamarContent();
   if (name === 'laporan-tunggakan') initLaporanTunggakan();
@@ -1375,23 +1311,8 @@ function updateProfileUI() {
   if (greeting) greeting.textContent = greet;
 }
 
-async function saveProfile() {
-  const namaEl = document.getElementById('edit-nama');
-  const nama = namaEl ? namaEl.value.trim() : '';
-  if (!nama) { showToast('Nama tidak boleh kosong', 'error'); return; }
-  if (state.user) state.user.name = nama;
-  saveLocal();
-  updateProfileUI();
-  closeSubPage('profil');
-  showToast('Profil disimpan', 'success');
-}
-
-// ================================================================
-// SEKSI 17: KELAS & KAMAR MANAGEMENT
-// addKelas/deleteKelas → kelola daftar kelas SPP
-// addKamar/deleteKamar → kelola daftar kamar catering
-// Data disimpan di Supabase tabel settings
-// ================================================================
+// ==========================================
+// KELAS & KAMAR MANAGEMENT
 // ==========================================
 let kelasList = ['Awaliyah A','Awaliyah B','Awaliyah C','1 Wushto A','1 Wustho B','1 Wustho C','2 Wustho A','2 Wustho B','2 Wushto C','3 Wustho A','3 Wustho B','3 Wushto C','1 Ulya A','1 Ulya B','1 Ulya C','2 Ulya A','2 Ulya B','2 Ulya C','3 Ulya A','3 Ulya B','3 Ulya C'];
 let kamarList = ['Kamar 01','Kamar 02','Kamar 03','Kamar 04','Kamar 05'];
@@ -1489,14 +1410,10 @@ async function deleteKamar(idx) {
   showToast('Kamar dihapus', 'success');
 }
 
-// ================================================================
-// SEKSI 18: TOAST NOTIFICATION
-// showToast(msg, type) → tampilkan notifikasi 3 detik
-// type: 'success' | 'error' | '' (default)
-// ================================================================
+// ==========================================
+// TOAST
 // ==========================================
 let toastTimer;
-// Tampilkan notifikasi. type: 'success' (hijau), 'error' (merah), '' (netral)
 function showToast(msg, type = '') {
   clearTimeout(toastTimer);
   const el = document.getElementById('toast');
@@ -1504,14 +1421,9 @@ function showToast(msg, type = '') {
   toastTimer = setTimeout(() => { el.innerHTML = ''; }, 3000);
 }
 
-// ================================================================
-// SEKSI 19: UTILITIES
-// formatRp(num)       → format angka ke Rupiah (1.000.000)
-// toTitleCase(str)    → "ahmad fauzi" → "Ahmad Fauzi"
-// toSentenceCase(str) → huruf pertama kapital saja
-// ================================================================
 // ==========================================
-// Ubah angka ke format Rupiah: 150000 → "150.000"
+// UTILS
+// ==========================================
 function formatRp(num) {
   if (!num) return '0';
   return parseInt(num).toLocaleString('id-ID');
@@ -1533,11 +1445,8 @@ function toSentenceCase(str) {
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-// ================================================================
-// SEKSI 20: KEYBOARD FIX (Android)
-// Menggeser modal/sub-page ke atas saat keyboard muncul
-// agar input tidak tertutup keyboard virtual
-// ================================================================
+// ==========================================
+// KEYBOARD FIX (Android)
 // ==========================================
 function handleViewportResize() {
   const visualH = window.visualViewport?.height || window.innerHeight;
@@ -1600,11 +1509,8 @@ if (window.visualViewport) {
   window.visualViewport.addEventListener('scroll', handleViewportResize);
 }
 
-// ================================================================
-// SEKSI 21: AUTO LOGOUT
-// Logout otomatis setelah 30 menit tidak ada aktivitas
-// Timer di-reset tiap ada: touch, click, scroll, keydown
-// ================================================================
+// ==========================================
+// AUTO LOGOUT — 30 menit tidak aktif
 // ==========================================
 const AUTO_LOGOUT_MS = 30 * 60 * 1000; // 30 menit
 let autoLogoutTimer;
@@ -1870,10 +1776,17 @@ function exportTunggakanPDF() {
 <div class="footer">Laporan digenerate otomatis · ${tglCetak}</div>
 </body></html>`;
 
-  const win = window.open('', '_blank');
-  win.document.write(html);
-  win.document.close();
-  win.onload = () => win.print();
+  // Buka via Blob URL — tidak diblokir popup blocker browser/mobile
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.target   = '_blank';
+  a.rel      = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
 }
 
 // ==========================================
@@ -1966,12 +1879,8 @@ async function eksekusiReset(resetSpp, resetCat) {
   }
 }
 
-// ================================================================
-// SEKSI 22: BACK BUTTON HANDLER
-// Mencegah app langsung tertutup saat tombol Back HP ditekan
-// Urutan: tutup modal → tutup confirm → tutup sub-page
-//         → tutup dropdown → kembali ke dashboard
-// ================================================================
+// ==========================================
+// BACK BUTTON — cegah app tertutup saat tombol back ditekan
 // ==========================================
 function pushAppHistory() {
   // Push state ke history sehingga tombol Back browser/HP
@@ -2006,11 +1915,8 @@ window.addEventListener('popstate', function(e) {
   pushAppHistory();
 });
 
-// ================================================================
-// SEKSI 25: INIT
-// init() dipanggil otomatis saat halaman selesai dimuat
-// Urutan: loadLocal → applyDarkMode → cek session → render
-// ================================================================
+// ==========================================
+// INIT
 // ==========================================
 function init() {
   loadLocal();
