@@ -1301,6 +1301,14 @@ function openSubPage(name) {
   if (name === 'tarif-catering') document.getElementById('input-tarif-catering').value = state.settings.tarifCatering || '';
   if (name === 'tarif-spp') document.getElementById('input-tarif-spp').value = state.settings.tarifSpp || '';
   if (name === 'tahun-ajaran') document.getElementById('input-tahun-ajaran').value = state.settings.tahunAjaran || '';
+  if (name === 'profil') {
+    const namaEl = document.getElementById('edit-nama');
+    if (namaEl && state.user) namaEl.value = state.user.name || '';
+    const usEl = document.getElementById('info-username-display');
+    const roleEl = document.getElementById('info-role-display');
+    if (usEl && state.user) usEl.textContent = state.user.username || state.user.email || '-';
+    if (roleEl && state.user) roleEl.textContent = state.user.role || '-';
+  }
   if (name === 'data-kelas') renderKelasContent();
   if (name === 'data-kamar') renderKamarContent();
   if (name === 'laporan-tunggakan') initLaporanTunggakan();
@@ -1365,6 +1373,17 @@ function updateProfileUI() {
   const hour = new Date().getHours();
   const greet = hour < 10 ? 'Selamat Pagi ☀️' : hour < 15 ? 'Selamat Siang 🌤' : hour < 18 ? 'Selamat Sore 🌅' : 'Selamat Malam 🌙';
   if (greeting) greeting.textContent = greet;
+}
+
+async function saveProfile() {
+  const namaEl = document.getElementById('edit-nama');
+  const nama = namaEl ? namaEl.value.trim() : '';
+  if (!nama) { showToast('Nama tidak boleh kosong', 'error'); return; }
+  if (state.user) state.user.name = nama;
+  saveLocal();
+  updateProfileUI();
+  closeSubPage('profil');
+  showToast('Profil disimpan', 'success');
 }
 
 // ================================================================
