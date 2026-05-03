@@ -4,44 +4,22 @@
   ================================================================
   Fungsi  : Semua styling antarmuka aplikasi
   Font    : Sora (judul/angka) + DM Sans (teks umum)
-  Palet   : Deep Teal (#0d7a6e) + Warm Gold (#c9962a) + Cream (#f0f4f8)
-
-  Struktur file:
-    1. CSS Variables (:root)     → semua token warna, ukuran, shadow
-    2. Dark Mode                 → override variabel untuk tema gelap
-    3. Reset                     → box-sizing, margin, font dasar
-    4. App Shell                 → layout utama #app, .screen
-    5. Login Screen              → halaman login
-    6. Top Header                → header atas fixed
-    7. Dropdown Menu             → menu konteks (dark mode, logout, dll)
-    8. Content Area              → area scroll utama + animasi halaman
-    9. Bottom Navbar             → navigasi bawah 4 tab
-   10. Dashboard                 → stat card, donut chart, ringkasan keuangan
-   11. Catering & SPP Tables     → tabel data dengan centang bulan
-   12. Settings Page             → kartu profil, daftar pengaturan, toggle
-   13. Modal Sheet               → bottom sheet tambah/edit data
-   14. Confirm Dialog            → dialog konfirmasi
-   15. Sub Pages                 → halaman slide dari kanan
-   16. Print                     → style khusus cetak
-   17. Utilities                 → class helper (text-blue, fw700, dll)
+  Palet   : Deep Teal (#0d7a6e) + Warm Gold (#c9962a) + Cream
 
   Cara ubah warna utama (teal):
     Cari --primary di :root dan ganti nilainya.
-    --primary-dark  = versi lebih gelap (hover/gradient)
-    --primary-light = versi sangat muda (latar badge/icon)
-    --primary-glow  = bayangan berwarna (box-shadow)
 
   Cara ubah warna aksen emas:
     Cari --gold dan ganti nilainya.
   ================================================================
 */
-
+/* =====================================================
+   DARUL FALAH — MODERN UI 2026
+   Font: Sora (display) + DM Sans (body)
+   Palette: Deep Teal + Warm Gold + Soft Cream
+   ===================================================== */
 @import url('https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
 
-/* ── 1. CSS VARIABLES ─────────────────────────────────────────
-   Token desain: warna, ukuran radius, bayangan, transisi
-   Edit di sini untuk mengubah tampilan keseluruhan app
-   ─────────────────────────────────────────────────────────── */
 :root {
   --primary:        #0d7a6e;
   --primary-dark:   #085e55;
@@ -80,10 +58,6 @@
   --transition:    0.22s cubic-bezier(0.4,0,0.2,1);
 }
 
-/* ── 2. DARK MODE ──────────────────────────────────────────────
-   Override variabel untuk tema gelap
-   Aktif saat <html data-theme="dark">
-   ─────────────────────────────────────────────────────────── */
 [data-theme="dark"] {
   --primary:        #14b8a6;
   --primary-dark:   #0d9488;
@@ -106,7 +80,6 @@
   --overlay:        rgba(0,0,0,0.72);
 }
 
-/* ── 3. RESET & BASE ───────────────────────────────────────── */
 /* ── RESET ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body {
@@ -123,16 +96,11 @@ button { font-family: inherit; cursor: pointer; border: none; outline: none; bac
 input, select, textarea { font-family: inherit; outline: none; border: none; }
 a { text-decoration: none; color: inherit; }
 
-/* ── 4. APP SHELL ──────────────────────────────────────────────
-   Layout utama: #app sebagai flex column penuh layar
-   .screen = halaman (hanya yang .active yang tampil)
-   ─────────────────────────────────────────────────────────── */
 /* ── APP SHELL ── */
 #app { width: 100%; height: 100%; display: flex; flex-direction: column; position: relative; overflow: hidden; }
 .screen { display: none; flex-direction: column; height: 100%; overflow: hidden; }
 .screen.active { display: flex; }
 
-/* ── 5. LOGIN SCREEN ───────────────────────────────────────── */
 /* ══════════════════════════════════════════
    LOGIN SCREEN
 ══════════════════════════════════════════ */
@@ -254,7 +222,6 @@ a { text-decoration: none; color: inherit; }
 ══════════════════════════════════════════ */
 #screen-main { flex-direction: row; }
 
-/* ── 6. TOP HEADER ─────────────────────────────────────────── */
 /* ── TOP HEADER ── */
 .top-header {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
@@ -288,7 +255,6 @@ a { text-decoration: none; color: inherit; }
 }
 .btn-more:active { background: rgba(255,255,255,0.25); }
 
-/* ── 7. DROPDOWN MENU ──────────────────────────────────────── */
 /* ── DROPDOWN ── */
 .dropdown-menu {
   position: fixed; top: 58px; right: 12px; z-index: 999;
@@ -316,7 +282,6 @@ a { text-decoration: none; color: inherit; }
 .dropdown-item.danger svg { color: var(--accent-red); }
 .dropdown-divider { height: 1px; background: var(--card-border); }
 
-/* ── 8. CONTENT AREA & PAGE ANIMATION ─────────────────────── */
 /* ── CONTENT AREA ── */
 .main-content {
   flex: 1;
@@ -335,7 +300,6 @@ a { text-decoration: none; color: inherit; }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── 9. BOTTOM NAVBAR ──────────────────────────────────────── */
 /* ── BOTTOM NAVBAR ── */
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0;
@@ -370,7 +334,6 @@ a { text-decoration: none; color: inherit; }
 @keyframes navBounce { from{transform:translateY(3px) scale(0.86)} to{transform:translateY(-1px) scale(1.08)} }
 .nav-item.active svg { animation: navBounce 0.32s cubic-bezier(0.34,1.56,0.64,1); }
 
-/* ── 10. DASHBOARD PAGE ────────────────────────────────────── */
 /* ══════════════════════════════════════════
    DASHBOARD PAGE
 ══════════════════════════════════════════ */
@@ -722,7 +685,6 @@ td.small { font-size: 11px; color: var(--text-secondary); }
 .empty-state svg { width: 52px; height: 52px; margin: 0 auto 14px; opacity: 0.3; display: block; }
 .empty-state p { font-size: 14px; font-weight: 600; }
 
-/* ── 12. SETTINGS PAGE ─────────────────────────────────────── */
 /* ══════════════════════════════════════════
    SETTINGS PAGE
 ══════════════════════════════════════════ */
@@ -816,7 +778,6 @@ td.small { font-size: 11px; color: var(--text-secondary); }
 }
 .btn-logout:active { transform: scale(0.98); filter: brightness(0.95); }
 
-/* ── 13. MODAL SHEET ───────────────────────────────────────── */
 /* ══════════════════════════════════════════
    MODAL SHEET
 ══════════════════════════════════════════ */
@@ -915,7 +876,6 @@ td.small { font-size: 11px; color: var(--text-secondary); }
 }
 .btn-save:active { transform: scale(0.98); filter: brightness(0.95); }
 
-/* ── 14. CONFIRM DIALOG ────────────────────────────────────── */
 /* ── CONFIRM DIALOG ── */
 .confirm-dialog {
   position: fixed; inset: 0; z-index: 600;
@@ -984,7 +944,6 @@ td.small { font-size: 11px; color: var(--text-secondary); }
   animation: spin 0.7s linear infinite; display: inline-block;
 }
 
-/* ── 15. SUB PAGES (slide dari kanan) ──────────────────────── */
 /* ── SUB PAGES ── */
 .sub-page {
   position: fixed; inset: 0; z-index: 200;
@@ -1015,7 +974,6 @@ td.small { font-size: 11px; color: var(--text-secondary); }
 }
 .sub-page-content { flex: 1; overflow-y: auto; padding: 16px; }
 
-/* ── 16. PRINT STYLES ─────────────────────────────────────── */
 /* ── PRINT ── */
 @media print {
   #print-area, #print-area * { visibility: visible !important; }
@@ -1023,7 +981,6 @@ td.small { font-size: 11px; color: var(--text-secondary); }
   .print-hide { display: none !important; }
 }
 
-/* ── 17. UTILITY CLASSES ───────────────────────────────────── */
 /* ── MISC ── */
 .text-blue   { color: var(--accent-blue); }
 .text-pink   { color: #ec4899; }
