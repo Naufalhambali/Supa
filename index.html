@@ -359,7 +359,7 @@
            ─────────────────────────────────────────── -->
       <!-- SETTING PAGE -->
       <div class="page" id="page-setting">
-        <div class="profile-card">
+        <div class="profile-card" onclick="openSubPage('profil')" style="cursor:pointer">
           <div class="avatar" id="avatar-letter">A</div>
           <div class="profile-info">
             <h3 id="profile-name">Admin Pondok</h3>
@@ -511,6 +511,13 @@
        Ditutup via closeSubPage('nama')
        ════════════════════════════════════════ -->
   <!-- ===== SUB PAGES ===== -->
+
+  <!-- Profil Admin -->
+  <div class="sub-page" id="sub-profil">
+    <div class="sub-page-header">
+      <button class="btn-back" onclick="closeSubPage('profil')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+      <h2>Profil Admin</h2>
+    </div>
     <div class="sub-page-content">
       <div class="section-card">
         <div class="modal-form">
@@ -524,7 +531,7 @@
                 <div style="font-size:11px;color:var(--text-secondary)" id="info-role-display">-</div>
               </div>
             </div>
-            <div style="font-size:11px;color:var(--text-muted);margin-top:5px;padding-left:2px">⚠️ Username dan role diatur langsung di Spreadsheet → Sheet Users</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:5px;padding-left:2px">⚠️ Username dan role diatur di tabel users Supabase</div>
           </div>
           <button class="btn-save" onclick="saveProfile()" style="margin-top:8px">Simpan Nama</button>
         </div>
