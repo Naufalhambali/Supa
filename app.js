@@ -386,18 +386,6 @@ async function sbResetCentangBulan({ resetSpp, resetCat }) {
 
 
 
-    if (catDetail.length > 0) {
-      const rows = catDetail.map(x => ({ ...x, rekap_id: rekapId }));
-      for (let i = 0; i < rows.length; i += 500) {
-        const { error } = await sb.from('rekap_catering').insert(rows.slice(i, i + 500));
-        if (error) throw error;
-      }
-    }
-
-    return { success: true };
-  } catch(e) { return { success: false, error: e.message }; }
-}
-
 // ==========================================
 // AUTH
 // ==========================================
