@@ -1,30 +1,16 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#1a56db">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <title>Darul Falah Gambut</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <style>
-/*
-  ================================================================
-  DARUL FALAH GAMBUT — style.css
-  ================================================================
-  Fungsi  : Semua styling antarmuka aplikasi
-  Font    : Sora (judul/angka) + DM Sans (teks umum)
-  Palet   : Deep Teal (#0d7a6e) + Warm Gold (#c9962a) + Cream
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1a56db">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Darul Falah Gambut</title>
+<link rel="manifest" href="manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
 
-  Cara ubah warna utama (teal):
-    Cari --primary di :root dan ganti nilainya.
-
-  Cara ubah warna aksen emas:
-    Cari --gold dan ganti nilainya.
-  ================================================================
-*/
+<style>
 /* =====================================================
    DARUL FALAH — MODERN UI 2026
    Font: Sora (display) + DM Sans (body)
@@ -534,6 +520,21 @@ a { text-decoration: none; color: inherit; }
   border: 1px solid var(--card-border);
 }
 .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.6s cubic-bezier(0.4,0,0.2,1); }
+.btn-rekap {
+  width: 100%; padding: 13px;
+  background: var(--bg); border: 1.5px solid var(--card-border);
+  border-radius: var(--radius-xs); font-size: 13px; font-weight: 700;
+  color: var(--text-secondary); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  transition: all 0.15s; margin-top: 4px;
+}
+.btn-rekap:active { transform: scale(0.98); }
+.btn-rekap.saving { opacity: 0.7; pointer-events: none; }
+.btn-rekap-done {
+  background: rgba(34,197,94,0.08) !important;
+  border-color: rgba(34,197,94,0.35) !important;
+  color: #16a34a !important;
+}
 .rekap-info {
   text-align: center; font-size: 11px; color: var(--text-muted);
   font-weight: 500; margin-top: 6px;
@@ -727,6 +728,14 @@ td.small { font-size: 11px; color: var(--text-secondary); }
   letter-spacing: 0.3px; text-transform: uppercase;
 }
 .profile-info p { font-size: 12px; color: var(--text-secondary); }
+.btn-edit-profile {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 13px; border-radius: var(--radius-xs);
+  font-size: 12px; font-weight: 700;
+  border: 1.5px solid var(--primary); color: var(--primary); background: none;
+  transition: all 0.15s;
+}
+.btn-edit-profile:active { background: var(--primary-light); }
 .setting-section {
   background: var(--card); border-radius: var(--radius);
   overflow: hidden; margin-bottom: 14px;
@@ -1001,17 +1010,7 @@ td.small { font-size: 11px; color: var(--text-secondary); }
 .mt8         { margin-top: 8px; }
 
 body.modal-open { overflow: hidden; }
-
-  </style>
-  <!-- Critical CSS: pastikan screen tersembunyi sebelum JS jalan -->
-  <style>
-    html,body{height:100%;margin:0;overflow:hidden}
-    #app{width:100%;height:100%;display:flex;flex-direction:column;overflow:hidden}
-    .screen{display:none!important;flex-direction:column;height:100%;overflow:hidden}
-    .screen.active{display:flex!important}
-    .bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:100}
-    .top-header{position:fixed;top:0;left:0;right:0;z-index:100}
-  </style>
+</style>
 </head>
 <body>
 <div id="app">
@@ -1450,6 +1449,50 @@ body.modal-open { overflow: hidden; }
   </div>
 
   <!-- ===== SUB PAGES ===== -->
+  <!-- Edit Profile -->
+  <div class="sub-page" id="sub-edit-profile">
+    <div class="sub-page-header">
+      <button class="btn-back" onclick="closeSubPage('edit-profile')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+      <h2>Edit Profil</h2>
+    </div>
+    <div class="sub-page-content">
+      <div class="section-card">
+        <div class="modal-form">
+          <div class="form-group"><label>Nama Tampilan</label><input type="text" id="edit-nama" placeholder="Nama lengkap"></div>
+          <div class="form-group">
+            <label>Akun &amp; Role</label>
+            <div style="background:var(--bg);border:1.5px solid var(--input-border);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px">
+              <svg fill="none" viewBox="0 0 24 24" stroke="var(--primary)" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:var(--text-primary)" id="info-username-display">-</div>
+                <div style="font-size:11px;color:var(--text-secondary)" id="info-role-display">-</div>
+              </div>
+            </div>
+            <div style="font-size:11px;color:var(--text-muted);margin-top:5px;padding-left:2px">⚠️ Username dan role diatur langsung di Spreadsheet → Sheet Users</div>
+          </div>
+          <button class="btn-save" onclick="saveProfile()" style="margin-top:8px">Simpan Nama</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ubah Password -->
+  <div class="sub-page" id="sub-ubah-password">
+    <div class="sub-page-header">
+      <button class="btn-back" onclick="closeSubPage('ubah-password')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg></button>
+      <h2>Ubah Password</h2>
+    </div>
+    <div class="sub-page-content">
+      <div class="section-card">
+        <div class="modal-form">
+          <div class="form-group"><label>Password Lama</label><input type="password" id="pw-old" placeholder="Password lama"></div>
+          <div class="form-group"><label>Password Baru</label><input type="password" id="pw-new" placeholder="Password baru (min. 6 karakter)"></div>
+          <div class="form-group"><label>Konfirmasi Password</label><input type="password" id="pw-confirm" placeholder="Ulangi password baru"></div>
+          <button class="btn-save" onclick="savePassword()" style="margin-top:8px">Simpan Password</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Data Santri Master -->
   <div class="sub-page" id="sub-data-santri">
@@ -1587,17 +1630,11 @@ body.modal-open { overflow: hidden; }
       </div>
 
       <!-- Export PDF -->
-      <button id="btn-export-pdf" onclick="exportTunggakanPDF()"
-        style="display:none;width:100%;padding:13px 16px;border:none;border-radius:12px;
-               background:linear-gradient(135deg,#e53e3e 0%,#c0392b 100%);color:#fff;
-               font-size:14px;font-weight:700;letter-spacing:.3px;cursor:pointer;
-               align-items:center;justify-content:center;gap:8px;
-               box-shadow:0 4px 16px rgba(220,38,38,.4);margin-top:4px">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18" style="vertical-align:middle;margin-right:6px">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2"
-            d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h4a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+      <button class="btn-rekap" id="btn-export-pdf" onclick="exportTunggakanPDF()" style="display:none">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
         </svg>
-        &#128196; Export PDF
+        Export PDF
       </button>
 
     </div>
@@ -1677,38 +1714,6 @@ body.modal-open { overflow: hidden; }
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-// ================================================================
-// DARUL FALAH GAMBUT — app.js
-// ================================================================
-// Fungsi  : Semua logika JavaScript aplikasi (frontend + API)
-// Backend : Supabase (Postgres + Auth)
-//
-// Daftar seksi utama:
-//   SUPABASE CONFIG    → URL & API key koneksi database
-//   APP STATE          → Variabel global status aplikasi
-//   LOCAL STORAGE      → Simpan/muat data lokal (cache offline)
-//   CACHE              → TTL cache agar tidak fetch berlebihan
-//   SUPABASE API       → Semua fungsi CRUD ke Supabase
-//   AUTH               → Login, logout, toggle password
-//   NAVIGATION         → Pindah halaman, dropdown, dark mode
-//   DATA LOADING       → Fetch semua data + indikator cache
-//   DASHBOARD          → Hitung & render statistik dashboard
-//   CATERING TABLE     → Render tabel catering + filter
-//   SPP TABLE          → Render tabel SPP + filter
-//   MODAL              → Form tambah & edit data
-//   SETTINGS           → Simpan tarif, kelas, kamar, dll
-//   TOAST              → Notifikasi singkat (3 detik)
-//   UTILS              → Helper: formatRp, toTitleCase, dll
-//   AUTO LOGOUT        → Logout otomatis setelah 30 menit
-//   BACK BUTTON        → Cegah app tertutup tombol Back HP
-//   LAPORAN TUNGGAKAN  → Laporan tunggakan per bulan
-//   RESET CENTANG      → Reset semua centang bayar bulan ini
-//   INIT               → Inisialisasi saat app pertama dibuka
-//
-// Cara ganti koneksi Supabase:
-//   Cari seksi SUPABASE CONFIG → ganti SUPABASE_URL dan SUPABASE_KEY
-// ================================================================
-
 // ==========================================
 // SUPABASE CONFIG
 // ==========================================
@@ -1859,6 +1864,9 @@ async function callScript(action, data = {}) {
     case 'getMonthlyFinance': return sbGetMonthlyFinance(data);
     case 'getTotalTahunan':   return sbGetTotalTahunan(data);
     case 'resetCentangBulan': return sbResetCentangBulan(data);
+    case 'changePassword':    return sbChangePassword(data);
+    case 'saveRekapBulanan':  return sbSaveRekapBulanan(data);
+    case 'getRekapStatus':    return sbGetRekapStatus(data);
     default: return { success: false, error: `Action '${action}' tidak dikenal` };
   }
 }
@@ -2061,9 +2069,95 @@ async function sbResetCentangBulan({ resetSpp, resetCat }) {
   } catch(e) { return { success: false, error: e.message }; }
 }
 
+async function sbChangePassword({ oldPassword, newPassword }) {
+  try {
+    // Re-auth dulu untuk verifikasi password lama
+    const email = state.user.username.includes('@')
+      ? state.user.username
+      : `${state.user.username}@dafalah.id`;
+    const { error: reAuthError } = await sb.auth.signInWithPassword({ email, password: oldPassword });
+    if (reAuthError) return { success: false, error: 'Password lama salah' };
+    // Update password via Supabase Auth
+    const { error } = await sb.auth.updateUser({ password: newPassword });
+    if (error) throw error;
+    return { success: true };
+  } catch(e) { return { success: false, error: e.message }; }
+}
 
 
+async function sbGetRekapStatus({ bulan, tahun }) {
+  try {
+    const { data, error } = await sb.from('rekap_bulanan')
+      .select('id, nama_bulan, updated_at')
+      .eq('bulan', bulan).eq('tahun', tahun).maybeSingle();
+    if (error) throw error;
+    return { success: true, data: data || null };
+  } catch(e) { return { success: false, error: e.message }; }
+}
 
+async function sbSaveRekapBulanan({ bulan, tahun }) {
+  try {
+    const blnIdx        = bulan - 1;
+    const namaBulan     = NAMA_BULAN_JS[blnIdx] + ' ' + tahun;
+    const tarifSpp      = state.settings.tarifSpp      || 0;
+    const tarifCatering = state.settings.tarifCatering || 0;
+
+    const sppDetail = state.sppData.map(r => ({
+      nama:   r.nama, bin: r.bin||'', gender: r.gender,
+      kelas:  r.kelas||'', tarif: tarifSpp,
+      status: r.months[blnIdx] === true ? 'lunas' : 'belum'
+    }));
+    const catDetail = state.cateringData.map(r => ({
+      nama:   r.nama, bin: r.bin||'', gender: r.gender,
+      kamar:  r.kamar||'', tarif: tarifCatering,
+      status: r.months[blnIdx] === true ? 'lunas' : 'belum'
+    }));
+
+    const sppBayar = sppDetail.filter(x => x.status === 'lunas').length;
+    const sppBelum = sppDetail.filter(x => x.status === 'belum').length;
+    const catBayar = catDetail.filter(x => x.status === 'lunas').length;
+    const catBelum = catDetail.filter(x => x.status === 'belum').length;
+
+    const totalSpp      = sppBayar * tarifSpp;
+    const totalCatering = catBayar * tarifCatering;
+    const totalBelum    = (sppBelum * tarifSpp) + (catBelum * tarifCatering);
+
+    const { data: rbData, error: rbErr } = await sb.from('rekap_bulanan')
+      .upsert({
+        bulan, tahun, nama_bulan: namaBulan,
+        total_spp: totalSpp, total_catering: totalCatering,
+        total_masuk: totalSpp + totalCatering, total_belum: totalBelum,
+        spp_bayar: sppBayar, spp_belum: sppBelum,
+        cat_bayar: catBayar, cat_belum: catBelum,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'bulan,tahun' })
+      .select('id').single();
+    if (rbErr) throw rbErr;
+
+    const rekapId = rbData.id;
+
+    await sb.from('rekap_spp').delete().eq('rekap_id', rekapId);
+    await sb.from('rekap_catering').delete().eq('rekap_id', rekapId);
+
+    if (sppDetail.length > 0) {
+      const rows = sppDetail.map(x => ({ ...x, rekap_id: rekapId }));
+      for (let i = 0; i < rows.length; i += 500) {
+        const { error } = await sb.from('rekap_spp').insert(rows.slice(i, i + 500));
+        if (error) throw error;
+      }
+    }
+
+    if (catDetail.length > 0) {
+      const rows = catDetail.map(x => ({ ...x, rekap_id: rekapId }));
+      for (let i = 0; i < rows.length; i += 500) {
+        const { error } = await sb.from('rekap_catering').insert(rows.slice(i, i + 500));
+        if (error) throw error;
+      }
+    }
+
+    return { success: true };
+  } catch(e) { return { success: false, error: e.message }; }
+}
 
 // ==========================================
 // AUTH
@@ -2909,6 +3003,13 @@ function openSubPage(name) {
   el.style.display = 'flex';
   requestAnimationFrame(() => el.classList.add('show'));
   // Pre-fill values
+  if (name === 'edit-profile' && state.user) {
+    document.getElementById('edit-nama').value = state.user.name || '';
+    const u = document.getElementById('info-username-display');
+    const r = document.getElementById('info-role-display');
+    if (u) u.textContent = state.user.username || '-';
+    if (r) r.textContent = 'Role: ' + (state.user.role || '-');
+  }
   if (name === 'tarif-catering') document.getElementById('input-tarif-catering').value = state.settings.tarifCatering || '';
   if (name === 'tarif-spp') document.getElementById('input-tarif-spp').value = state.settings.tarifSpp || '';
   if (name === 'tahun-ajaran') document.getElementById('input-tahun-ajaran').value = state.settings.tahunAjaran || '';
@@ -2925,6 +3026,32 @@ function closeSubPage(name) {
   setTimeout(() => { el.style.display = 'none'; }, 300);
 }
 
+function saveProfile() {
+  const nama = document.getElementById('edit-nama').value.trim();
+  if (!nama) { showToast('Nama tidak boleh kosong', 'error'); return; }
+  state.user = { ...state.user, name: nama };
+  saveLocal();
+  updateProfileUI();
+  closeSubPage('edit-profile');
+  showToast('Nama berhasil disimpan', 'success');
+}
+
+async function savePassword() {
+  const oldPw = document.getElementById('pw-old').value;
+  const newPw = document.getElementById('pw-new').value;
+  const confirmPw = document.getElementById('pw-confirm').value;
+  if (!oldPw || !newPw) { showToast('Semua field harus diisi', 'error'); return; }
+  if (newPw.length < 6) { showToast('Password minimal 6 karakter', 'error'); return; }
+  if (newPw !== confirmPw) { showToast('Konfirmasi password tidak cocok', 'error'); return; }
+  const res = await callScript('changePassword', { oldPassword: oldPw, newPassword: newPw });
+  if (res.success) {
+    closeSubPage('ubah-password');
+    showToast('Password berhasil diubah', 'success');
+    document.getElementById('pw-old').value = '';
+    document.getElementById('pw-new').value = '';
+    document.getElementById('pw-confirm').value = '';
+  } else showToast(res.error || 'Gagal mengubah password', 'error');
+}
 
 async function saveTarifCatering() {
   const val = parseInt(document.getElementById('input-tarif-catering').value) || 0;
@@ -3201,6 +3328,56 @@ function resetAutoLogout() {
 });
 
 // ==========================================
+// PULL TO REFRESH
+// ==========================================
+(function initPullToRefresh() {
+  const content   = document.getElementById('main-content');
+
+  const THRESHOLD = 70; // jarak tarik untuk trigger refresh (px)
+  let startY = 0, currentY = 0, pulling = false, triggered = false;
+
+  function canPull() {
+    // Hanya aktif kalau scroll posisi paling atas
+    return content.scrollTop <= 0 && state.loggedIn;
+  }
+
+  content.addEventListener('touchstart', e => {
+    if (!canPull()) return;
+    startY   = e.touches[0].clientY;
+    pulling  = true;
+    triggered = false;
+  }, { passive: true });
+
+  content.addEventListener('touchmove', e => {
+    if (!pulling) return;
+    currentY = e.touches[0].clientY;
+    const dist = Math.min(currentY - startY, THRESHOLD * 1.4);
+
+    if (dist >= THRESHOLD) {
+      label.textContent = 'Lepas untuk refresh';
+    } else {
+      label.textContent = 'Tarik untuk refresh';
+    }
+  }, { passive: true });
+
+  content.addEventListener('touchend', async () => {
+    if (!pulling) return;
+    pulling = false;
+    const dist = currentY - startY;
+
+    if (dist >= THRESHOLD && !triggered) {
+      triggered = true;
+      label.textContent  = 'Memuat...';
+      spinner.classList.add('spin');
+      await loadAllData(true);
+      spinner.classList.remove('spin');
+    }
+
+    label.textContent = 'Tarik untuk refresh';
+    startY = 0; currentY = 0;
+  }, { passive: true });
+})();
+// ==========================================
 let laporanView = { bulan: 0, tahun: 0, tab: 'semua' };
 
 function initLaporanTunggakan() {
@@ -3360,18 +3537,16 @@ function renderLaporanList() {
 
 function exportTunggakanPDF() {
   if (!laporanView.data) return;
-  const { sppList, catList, namaBulan } = laporanView.data;
+  const { sppList, catList, namaBulan, totalBelum } = laporanView.data;
   const tab = laporanView.tab;
-  const tahunAjaran = state.settings.tahunAjaran || '';
 
-  // ── Tentukan data & label tab ──────────────────────────────
   let filtered = [];
   let labelTab = '';
   if (tab === 'semua') {
     filtered = [
       ...sppList.map(x => ({ ...x, jenisLabel: 'SPP' })),
       ...catList.map(x => ({ ...x, jenisLabel: 'Catering' }))
-    ].sort((a, b) => a.nama.localeCompare(b.nama, 'id'));
+    ].sort((a,b) => a.nama.localeCompare(b.nama));
     labelTab = 'SPP & Catering';
   } else if (tab === 'spp') {
     filtered = sppList.map(x => ({ ...x, jenisLabel: 'SPP' }));
@@ -3381,183 +3556,74 @@ function exportTunggakanPDF() {
     labelTab = 'Catering';
   }
 
-  const tglCetak    = new Date().toLocaleDateString('id-ID', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+  const tglCetak = new Date().toLocaleDateString('id-ID', { day:'2-digit', month:'long', year:'numeric' });
   const totalPiutang = filtered.reduce((s, x) => s + x.nominal, 0);
 
-  // ── Baris tabel — bin/binti kolom terpisah ─────────────────
   const rows = filtered.map((x, i) => {
     const binLabel = x.gender === 'santriwati' ? 'binti' : 'bin';
-    const binCell  = x.bin ? `${binLabel} ${x.bin}` : '-';
-    const jenisBg  = x.jenisLabel === 'SPP'
-      ? 'background:#dbeafe;color:#1e40af'
-      : 'background:#fef3c7;color:#92400e';
+    const binText  = x.bin ? `<div style="font-size:10px;color:#888">${binLabel} ${x.bin}</div>` : '';
     return `
     <tr>
-      <td class="center">${i + 1}</td>
-      <td class="bold">${x.nama}</td>
-      <td>${binCell}</td>
+      <td style="text-align:center">${i+1}</td>
+      <td>${x.nama}${binText}</td>
       <td>${x.sub}</td>
-      <td class="center"><span style="padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;${jenisBg}">${x.jenisLabel}</span></td>
-      <td class="right red">Rp ${formatRp(x.nominal)}</td>
+      <td style="text-align:center">${x.jenisLabel}</td>
+      <td style="text-align:right">Rp ${formatRp(x.nominal)}</td>
     </tr>`;
   }).join('');
 
-  // ── Ringkasan per jenis ─────────────────────────────────────
-  const jmlSpp = filtered.filter(x => x.jenisLabel === 'SPP').length;
-  const jmlCat = filtered.filter(x => x.jenisLabel === 'Catering').length;
-
   const html = `<!DOCTYPE html>
-<html lang="id"><head>
+<html><head>
 <meta charset="UTF-8">
 <title>Laporan Tunggakan ${labelTab} - ${namaBulan}</title>
 <style>
   * { margin:0; padding:0; box-sizing:border-box; }
-  body { font-family:'Times New Roman',Times,serif; font-size:12pt; color:#111; padding:2cm 2.5cm; }
-
-  /* ── KOP SURAT ── */
-  .kop { display:flex; align-items:center; border-bottom:3px double #1a3a6e; padding-bottom:10px; margin-bottom:4px; }
-  .kop-logo { width:70px; height:70px; margin-right:16px; object-fit:contain; flex-shrink:0; }
-  .kop-logo-placeholder { width:70px; height:70px; border:2px solid #1a3a6e; border-radius:8px; margin-right:16px;
-    display:flex; align-items:center; justify-content:center; font-size:9px; color:#1a3a6e; text-align:center; flex-shrink:0; }
-  .kop-text { text-align:center; flex:1; }
-  .kop-text .nama-pesantren { font-size:18pt; font-weight:900; color:#1a3a6e; letter-spacing:.5px; text-transform:uppercase; }
-  .kop-text .alamat { font-size:9pt; color:#444; margin-top:3px; line-height:1.5; }
-  .kop-sub { text-align:center; font-size:8.5pt; color:#666; margin-bottom:12px; border-bottom:1px solid #ccc; padding-bottom:6px; }
-
-  /* ── JUDUL SURAT ── */
-  .judul { text-align:center; margin:18px 0 6px; }
-  .judul h1 { font-size:14pt; font-weight:900; text-transform:uppercase; letter-spacing:.5px; text-decoration:underline; }
-  .judul .sub { font-size:11pt; margin-top:4px; }
-
-  /* ── META INFO ── */
-  .meta-tabel { width:100%; margin:14px 0; font-size:10.5pt; border-collapse:collapse; }
-  .meta-tabel td { padding:2px 6px; vertical-align:top; }
-  .meta-tabel td:first-child { width:160px; font-weight:600; }
-  .meta-tabel td:nth-child(2) { width:10px; }
-
-  /* ── PEMBUKA ── */
-  .pembuka { font-size:11pt; margin-bottom:12px; line-height:1.7; }
-
-  /* ── TABEL DATA ── */
-  table.data { width:100%; border-collapse:collapse; margin:12px 0; font-size:10.5pt; }
-  table.data thead tr { background:#1a3a6e; color:#fff; }
-  table.data th { padding:7px 9px; font-weight:700; border:1px solid #1a3a6e; }
-  table.data td { padding:6px 9px; border:1px solid #ccc; vertical-align:middle; }
-  table.data tbody tr:nth-child(even) td { background:#f5f7fa; }
-  table.data .total td { background:#fef2f2; font-weight:700; color:#b91c1c; border-top:2px solid #b91c1c; }
-  .center { text-align:center; }
-  .right  { text-align:right; }
-  .bold   { font-weight:700; }
-  .red    { color:#b91c1c; }
-
-  /* ── RINGKASAN ── */
-  .ringkasan { margin:10px 0 18px; font-size:10.5pt; }
-  .ringkasan td { padding:2px 8px; }
-
-  /* ── PENUTUP & TTD ── */
-  .penutup { font-size:11pt; line-height:1.8; margin-bottom:24px; }
-  .ttd-wrap { display:flex; justify-content:flex-end; margin-top:28px; }
-  .ttd { text-align:center; font-size:11pt; }
-  .ttd .ttd-nama { font-weight:700; text-decoration:underline; margin-top:64px; }
-  .ttd .ttd-jabatan { font-size:10pt; color:#444; }
-
-  /* ── FOOTER ── */
-  .footer-doc { text-align:center; font-size:9pt; color:#999; border-top:1px solid #ddd; margin-top:32px; padding-top:8px; }
-
-  @media print {
-    body { padding:1.5cm 2cm; }
-    .kop-logo-placeholder svg { display:none; }
-  }
+  body { font-family: Arial, sans-serif; font-size: 12px; color: #111; padding: 24px; }
+  .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #1a56db; padding-bottom: 12px; }
+  .header h1 { font-size: 16px; font-weight: 800; color: #1a56db; }
+  .header p  { font-size: 12px; color: #555; margin-top: 3px; }
+  .meta { display: flex; justify-content: space-between; margin-bottom: 14px; font-size: 11px; color: #555; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+  th { background: #1a56db; color: white; padding: 8px 10px; font-size: 11px; text-align: left; }
+  td { padding: 7px 10px; border-bottom: 1px solid #e5e7eb; font-size: 11px; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  .total-row td { font-weight: 800; background: #fef3f2; color: #dc2626; border-top: 2px solid #dc2626; }
+  .footer { text-align: right; font-size: 11px; color: #888; margin-top: 16px; }
+  @media print { body { padding: 12px; } }
 </style>
 </head><body>
-
-<!-- KOP SURAT -->
-<div class="kop">
-  <div class="kop-logo-placeholder">LOGO<br>PESANTREN</div>
-  <div class="kop-text">
-    <div class="nama-pesantren">Pondok Pesantren Darul Falah</div>
-    <div class="alamat">
-      Jl. Ahmad Yani KM.15, Gambut, Kabupaten Banjar, Kalimantan Selatan 70652<br>
-      Telp. — &nbsp;|&nbsp; Email: —
-    </div>
-  </div>
+<div class="header">
+  <h1>LAPORAN TUNGGAKAN ${labelTab.toUpperCase()}</h1>
+  <p>Pondok Pesantren Darul Falah Gambut</p>
+  <p style="font-weight:700;color:#111;margin-top:4px">Bulan: ${namaBulan}</p>
 </div>
-<div class="kop-sub">Lembaga Pendidikan Islam · Tahun Ajaran ${tahunAjaran}</div>
-
-<!-- JUDUL SURAT -->
-<div class="judul">
-  <h1>Laporan Tunggakan ${labelTab}</h1>
-  <div class="sub">Bulan <strong>${namaBulan}</strong></div>
+<div class="meta">
+  <span>Jumlah: <strong>${filtered.length} data</strong></span>
+  <span>Dicetak: ${tglCetak}</span>
 </div>
-
-<!-- META INFORMASI -->
-<table class="meta-tabel">
-  <tr><td>Jumlah Tunggakan</td><td>:</td><td><strong>${filtered.length} data</strong>${jmlSpp && jmlCat ? ` (SPP: ${jmlSpp}, Catering: ${jmlCat})` : ''}</td></tr>
-  <tr><td>Total Piutang</td><td>:</td><td><strong style="color:#b91c1c">Rp ${formatRp(totalPiutang)}</strong></td></tr>
-  <tr><td>Tanggal Cetak</td><td>:</td><td>${tglCetak}</td></tr>
-</table>
-
-<!-- KALIMAT PEMBUKA -->
-<div class="pembuka">
-  Berikut ini adalah daftar santri/santriwati Pondok Pesantren Darul Falah Gambut yang
-  tercatat <strong>belum melunasi pembayaran ${labelTab}</strong> pada bulan <strong>${namaBulan}</strong>.
-  Mohon perhatian dan tindak lanjut dari pihak terkait.
-</div>
-
-<!-- TABEL DATA -->
-<table class="data">
-  <thead>
-    <tr>
-      <th class="center" style="width:32px">No</th>
-      <th>Nama Santri/Wati</th>
-      <th>Bin / Binti</th>
-      <th>Kelas / Kamar</th>
-      <th class="center">Jenis</th>
-      <th class="right">Nominal</th>
-    </tr>
-  </thead>
+<table>
+  <thead><tr>
+    <th style="width:36px;text-align:center">No</th>
+    <th>Nama Santri</th>
+    <th>Kelas / Kamar</th>
+    <th style="text-align:center">Jenis</th>
+    <th style="text-align:right">Nominal</th>
+  </tr></thead>
   <tbody>
     ${rows}
-    <tr class="total">
-      <td colspan="5" class="right">Total Keseluruhan</td>
-      <td class="right">Rp ${formatRp(totalPiutang)}</td>
+    <tr class="total-row">
+      <td colspan="4" style="text-align:right">Total Piutang</td>
+      <td style="text-align:right">Rp ${formatRp(totalPiutang)}</td>
     </tr>
   </tbody>
 </table>
-
-<!-- KALIMAT PENUTUP -->
-<div class="penutup">
-  Demikian laporan ini dibuat berdasarkan data yang tercatat dalam sistem manajemen
-  Pondok Pesantren Darul Falah Gambut. Apabila terdapat kekeliruan data, mohon segera
-  menghubungi bagian administrasi.
-</div>
-
-<!-- TANDA TANGAN -->
-<div class="ttd-wrap">
-  <div class="ttd">
-    <div>Gambut, ${tglCetak}</div>
-    <div>Bendahara Pesantren,</div>
-    <div class="ttd-nama">(.................................)</div>
-    <div class="ttd-jabatan">Bendahara PP. Darul Falah Gambut</div>
-  </div>
-</div>
-
-<!-- FOOTER -->
-<div class="footer-doc">Dicetak otomatis dari Sistem Manajemen PP. Darul Falah Gambut &mdash; ${tglCetak}</div>
-
+<div class="footer">Laporan digenerate otomatis · ${tglCetak}</div>
 </body></html>`;
 
-  // Buka via Blob URL — tidak diblokir popup blocker browser/mobile
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.target   = '_blank';
-  a.rel      = 'noopener';
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 3000);
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  win.onload = () => win.print();
 }
 
 // ==========================================
@@ -3721,7 +3787,6 @@ function clearSearch(inputId, btnId, renderFn) {
 }
 
 init();
-
 </script>
 </body>
 </html>
