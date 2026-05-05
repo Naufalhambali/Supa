@@ -730,14 +730,6 @@ td.small { font-size: 11px; color: var(--text-secondary); }
   letter-spacing: 0.3px; text-transform: uppercase;
 }
 .profile-info p { font-size: 12px; color: var(--text-secondary); }
-.btn-edit-profile {
-  display: flex; align-items: center; gap: 6px;
-  padding: 8px 13px; border-radius: var(--radius-xs);
-  font-size: 12px; font-weight: 700;
-  border: 1.5px solid var(--primary); color: var(--primary); background: none;
-  transition: all 0.15s;
-}
-.btn-edit-profile:active { background: var(--primary-light); }
 .setting-section {
   background: var(--card); border-radius: var(--radius);
   overflow: hidden; margin-bottom: 14px;
@@ -827,48 +819,6 @@ td.small { font-size: 11px; color: var(--text-secondary); }
 .import-progress-bar { height: 6px; background: var(--card-border); border-radius: 3px; overflow: hidden; margin-top: 6px; }
 .import-progress-fill { height: 100%; background: var(--primary); border-radius: 3px; transition: width 0.3s; }
 
-/* User management */
-.user-card {
-  display: flex; align-items: center; gap: 12px;
-  padding: 14px 16px; border-bottom: 1px solid var(--card-border);
-  transition: background 0.12s;
-}
-.user-card:last-child { border-bottom: none; }
-.user-card:active { background: var(--bg); }
-.user-avatar-sm {
-  width: 44px; height: 44px; border-radius: 13px;
-  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Sora', sans-serif; font-size: 16px; font-weight: 800;
-  color: white; flex-shrink: 0;
-}
-.user-info { flex: 1; }
-.user-info p { font-size: 14px; font-weight: 700; color: var(--text-primary); }
-.user-info span { font-size: 11px; color: var(--text-secondary); }
-.user-badge {
-  display: inline-block; font-size: 9px; font-weight: 800;
-  padding: 2px 7px; border-radius: 5px; margin-left: 6px;
-  text-transform: uppercase; letter-spacing: 0.3px;
-}
-.badge-superadmin { background: rgba(239,68,68,0.12); color: #ef4444; }
-.badge-admin { background: var(--primary-light); color: var(--primary); }
-.badge-viewer { background: rgba(245,158,11,0.12); color: #f59e0b; }
-.badge-inactive { background: var(--bg-2); color: var(--text-muted); }
-.btn-user-del {
-  width: 34px; height: 34px; border-radius: var(--radius-xs);
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(239,68,68,0.1); color: #ef4444; flex-shrink: 0;
-  transition: background 0.15s;
-}
-.btn-user-del:active { background: rgba(239,68,68,0.2); }
-.btn-user-del svg { width: 16px; height: 16px; }
-.btn-user-toggle {
-  width: 34px; height: 34px; border-radius: var(--radius-xs);
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(34,197,94,0.1); color: #22c55e; flex-shrink: 0;
-  margin-right: 4px; transition: background 0.15s;
-}
-.btn-user-toggle svg { width: 16px; height: 16px; }
 
 /* Export option sheet */
 .export-option {
@@ -1121,21 +1071,6 @@ td.small { font-size: 11px; color: var(--text-secondary); }
 
 body.modal-open { overflow: hidden; }
 
-/* Refresh Role button */
-.btn-refresh-role {
-  width: 100%; padding: 13px;
-  border-radius: 14px;
-  background: var(--primary-light);
-  color: var(--primary);
-  font-size: 14px; font-weight: 700;
-  border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  margin-bottom: 10px;
-  transition: background 0.15s, transform 0.1s;
-}
-.btn-refresh-role:active { transform: scale(0.98); background: rgba(13,122,110,0.18); }
-.btn-refresh-role svg { transition: transform 0.6s ease; }
-.btn-refresh-role.spinning svg { animation: spin 0.7s linear infinite; }
 </style>
 </head>
 <body>
@@ -1445,10 +1380,6 @@ body.modal-open { overflow: hidden; }
             <span class="role-badge" id="profile-role">Admin</span>
             <p>PP. Darul Falah Gambut</p>
           </div>
-          <button class="btn-edit-profile" onclick="openSubPage('edit-profile')">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-            Edit
-          </button>
         </div>
 
         <!-- DATA MASTER -->
@@ -1536,11 +1467,6 @@ body.modal-open { overflow: hidden; }
             <div class="setting-row-info"><p>Import Data Massal</p><span>Upload data santri dari file Excel/CSV</span></div>
             <div class="setting-row-right"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></div>
           </div>
-          <div class="setting-row" onclick="openSubPage('manajemen-user')">
-            <div class="setting-row-icon" style="background:#f59e0b"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg></div>
-            <div class="setting-row-info"><p>Manajemen User</p><span>Tambah/hapus admin & viewer</span></div>
-            <div class="setting-row-right"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></div>
-          </div>
           <div class="setting-row" onclick="openSubPage('backup-data')">
             <div class="setting-row-icon" style="background:#10b981"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg></div>
             <div class="setting-row-info"><p>Backup Data</p><span>Simpan seluruh data ke file lokal</span></div>
@@ -1561,12 +1487,6 @@ body.modal-open { overflow: hidden; }
           </div>
         </div>
 
-        <button id="btn-refresh-role" class="btn-refresh-role" onclick="doRefreshRole()">
-          <svg id="icon-refresh-role" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
-          </svg>
-          <span id="label-refresh-role">Refresh Role &amp; Profil</span>
-        </button>
         <button class="btn-logout" onclick="confirmLogout()">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
           Logout
@@ -1623,7 +1543,7 @@ body.modal-open { overflow: hidden; }
       <p id="confirm-text">Data ini akan dihapus secara permanen dan tidak dapat dikembalikan.</p>
       <div class="confirm-buttons">
         <button class="btn-cancel" onclick="closeConfirm()">Batal</button>
-        <button class="btn-confirm-del" id="btn-confirm-yes" onclick="doConfirm()">Hapus</button>
+        <button class="btn-confirm-del" id="btn-confirm-yes">Hapus</button>
       </div>
     </div>
   </div>
@@ -2235,112 +2155,6 @@ body.modal-open { overflow: hidden; }
   </div>
 
   <!-- ===== MANAJEMEN USER SUB-PAGE ===== -->
-  <div class="sub-page" id="sub-manajemen-user">
-    <div class="sub-page-header">
-      <button onclick="closeSubPage('manajemen-user')" class="btn-back"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg></button>
-      <h2>Manajemen User</h2>
-    </div>
-    <div class="sub-page-content">
-
-      <!-- Tambah user -->
-      <div class="section-card" style="margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
-          <div style="width:36px;height:36px;border-radius:10px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-            <svg fill="none" viewBox="0 0 24 24" stroke="var(--primary)" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-          </div>
-          <div>
-            <div class="section-title" style="margin-bottom:0">Tambah User Baru</div>
-            <div class="section-subtitle">Isi semua field lalu tekan Tambah</div>
-          </div>
-        </div>
-        <div class="modal-form">
-          <div class="form-group">
-            <label>Nama Lengkap</label>
-            <input type="text" id="new-user-name" placeholder="Nama lengkap">
-          </div>
-          <div class="form-group">
-            <label>Username</label>
-            <input type="text" id="new-user-username" placeholder="huruf kecil, angka, underscore" autocapitalize="none">
-          </div>
-          <div class="form-row">
-            <div class="form-group" style="margin-bottom:0">
-              <label>Password</label>
-              <input type="password" id="new-user-password" placeholder="Min. 6 karakter">
-            </div>
-            <div class="form-group" style="margin-bottom:0">
-              <label>Role</label>
-              <select id="new-user-role">
-                <option value="viewer">Viewer</option>
-                <option value="admin">Admin</option>
-                <option value="superadmin">Super Admin</option>
-              </select>
-            </div>
-          </div>
-          <button onclick="konfirmasiTambahUser()" class="btn-save" style="margin-top:14px;display:flex;align-items:center;justify-content:center;gap:8px">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            <span id="btn-tambah-user-text">Tambah User</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Daftar user -->
-      <div class="section-card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
-          <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:36px;height:36px;border-radius:10px;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;flex-shrink:0">
-              <svg fill="none" viewBox="0 0 24 24" stroke="#6366f1" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-            </div>
-            <div>
-              <div class="section-title" style="margin-bottom:0">Daftar User</div>
-              <div class="section-subtitle" id="user-list-subtitle">Memuat...</div>
-            </div>
-          </div>
-          <button onclick="loadUserList()" style="background:var(--primary-light);color:var(--primary);border:none;border-radius:var(--radius-xs);padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:5px">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="13" height="13"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            Refresh
-          </button>
-        </div>
-        <div id="user-list-container">
-          <div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">⏳ Memuat data user...</div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-
-  <!-- Modal Ubah Password User (dari manajemen user) -->
-  <div id="modal-ubah-pw-user" style="display:none;position:fixed;inset:0;background:var(--overlay);z-index:9200;align-items:flex-end;justify-content:center">
-    <div style="width:100%;max-width:480px;background:var(--card);border-radius:20px 20px 0 0;padding:20px;box-shadow:var(--shadow-xl)">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:34px;height:34px;border-radius:10px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center">
-            <svg fill="none" viewBox="0 0 24 24" stroke="#f59e0b" width="17" height="17"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-          </div>
-          <div>
-            <div style="font-size:15px;font-weight:800;color:var(--text-primary)">Ubah Password</div>
-            <div id="modal-ubah-pw-user-label" style="font-size:11px;color:var(--text-muted)">User</div>
-          </div>
-        </div>
-        <button onclick="closeUbahPwUserModal()" style="width:32px;height:32px;border-radius:50%;background:var(--bg-2);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div class="modal-form">
-        <div class="form-group">
-          <label>Password Baru</label>
-          <input type="password" id="ubah-pw-user-new" placeholder="Min. 6 karakter">
-        </div>
-        <div class="form-group">
-          <label>Konfirmasi Password</label>
-          <input type="password" id="ubah-pw-user-confirm" placeholder="Ulangi password baru">
-        </div>
-        <button onclick="doUbahPwUser()" class="btn-save" style="display:flex;align-items:center;justify-content:center;gap:8px">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-          <span id="btn-ubah-pw-user-text">Simpan Password Baru</span>
-        </button>
-      </div>
-    </div>
-  </div>
 
   <!-- ===== BACKUP DATA SUB-PAGE ===== -->
   <div class="sub-page" id="sub-backup-data">
@@ -2487,22 +2301,6 @@ async function refreshUserRole() {
     applyRoleUI();
     if (changed) showToast(`✅ Role diperbarui: ${data.role}`, 'success');
   } catch(e) { /* silent */ }
-}
-
-// Handler tombol Refresh Role & Profil — dengan animasi spin
-async function doRefreshRole() {
-  const btn   = document.getElementById('btn-refresh-role');
-  const label = document.getElementById('label-refresh-role');
-  if (!btn || btn.disabled) return;
-  btn.disabled = true;
-  btn.classList.add('spinning');
-  label.textContent = 'Memperbarui...';
-  await refreshUserRole();
-  await new Promise(r => setTimeout(r, 500)); // biar animasi keliatan
-  btn.classList.remove('spinning');
-  btn.disabled = false;
-  label.textContent = 'Refresh Role & Profil';
-  showToast('✅ Profil diperbarui', 'success');
 }
 
 // ==========================================
@@ -2937,22 +2735,15 @@ function enterApp() {
 }
 
 function confirmLogout() {
-  pendingDelete = null;
-  const titleEl = document.getElementById('confirm-title');
-  const iconWrap = document.getElementById('confirm-icon-wrap');
-  const iconSvg  = document.getElementById('confirm-icon-svg');
-  if (titleEl) titleEl.textContent = 'Keluar?';
-  if (iconWrap) iconWrap.style.background = 'rgba(239,68,68,0.12)';
-  if (iconSvg)  {
-    iconSvg.style.color = '#ef4444';
-    iconSvg.querySelector('path').setAttribute('d', 'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1');
-  }
-  const btnYa = document.getElementById('btn-confirm-yes');
-  if (btnYa) { btnYa.style.background = '#ef4444'; }
-  document.getElementById('confirm-text').textContent = 'Anda akan keluar. Data di Supabase tetap aman. Lanjutkan?';
-  document.getElementById('btn-confirm-yes').onclick = doLogout;
-  document.getElementById('confirm-dialog').classList.add('show');
-  closeDropdown();
+  closeDropdown(); // tutup dropdown dulu sebelum buka dialog
+  showKonfirmasi(
+    'Anda akan keluar. Data di Supabase tetap aman. Lanjutkan?',
+    '🚪 Ya, Keluar',
+    '#ef4444',
+    doLogout,
+    'Keluar?',
+    'logout'
+  );
 }
 
 function doLogout() {
@@ -3411,54 +3202,129 @@ function _applyStatusFilter(rows, type) {
 }
 
 
-function renderCateringTable() {
-  const q = (document.getElementById('cat-search')?.value || '').toLowerCase();
-  let data = state.cateringData.filter(x => x.gender === catCurrentTab);
-  if (catFilter.kamar) data = data.filter(x => x.kamar === catFilter.kamar);
-  data = _applyStatusFilter(data, 'catering');
-  const filtered = q ? data.filter(x =>
-    (x.nama||'').toLowerCase().includes(q) ||
-    (x.bin||'').toLowerCase().includes(q) ||
-    (x.kamar||'').toLowerCase().includes(q)
-  ) : data;
+// ==========================================
+// VIRTUAL SCROLL / CHUNKED TABLE RENDER
+// Render per batch pakai requestIdleCallback agar tidak blokir UI di HP spek rendah
+// ==========================================
+const _RENDER_CHUNK = 30; // baris per batch
+const _MONTH_LABELS = ['J','F','M','A','M','J','J','A','S','O','N','D'];
 
-  const tbody = document.getElementById('catering-tbody');
+// Debounce helper — hindari render berulang saat user mengetik cepat
+let _catRenderTimer = null;
+let _sppRenderTimer = null;
+
+function _buildCatRow(row, i) {
+  const months = row.months || Array(12).fill(false);
+  const monthsHtml = months.map((m, idx) =>
+    `<div class="month-check ${m?'checked':''}">${_MONTH_LABELS[idx]}</div>`
+  ).join('');
+  const nameSafe = (row.nama||'').replace(/'/g,"\\'");
+  return `<tr>
+    <td>${i+1}</td>
+    <td onclick="openEditModal('catering','${row.id}')" style="cursor:pointer;max-width:160px;padding-right:4px">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <strong style="color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;display:block">${row.nama||''}</strong>
+        <span style="font-size:12px;color:var(--text-muted);white-space:nowrap">${catCurrentTab==='santri'?'bin':'binti'} ${row.bin||''}</span>
+      </div>
+    </td>
+    <td class="small" style="padding-left:4px">${row.kamar||''}</td>
+    <td class="small">${row.alamat||''}</td>
+    <td colspan="12"><div class="month-checks">${monthsHtml}</div></td>
+    <td><div class="action-btns">
+      <button class="btn-action btn-edit" onclick="openEditModal('catering','${row.id}')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+      </button>
+      <button class="btn-action btn-delete" onclick="confirmDelete('catering','${row.id}','${nameSafe}')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </button>
+    </div></td>
+  </tr>`;
+}
+
+function _buildSppRow(row, i, binLabel) {
+  const months = row.months || Array(12).fill(false);
+  const monthsHtml = months.map((m, idx) =>
+    `<div class="month-check ${m?'checked':''}">${_MONTH_LABELS[idx]}</div>`
+  ).join('');
+  const nameSafe = (row.nama||'').replace(/'/g,"\\'");
+  return `<tr>
+    <td>${i+1}</td>
+    <td onclick="openEditModal('spp','${row.id}')" style="cursor:pointer;max-width:160px;padding-right:4px">
+      <div style="display:flex;flex-direction:column;gap:2px">
+        <strong style="color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;display:block">${row.nama||''}</strong>
+        <span style="font-size:12px;color:var(--text-muted);white-space:nowrap">${binLabel} ${row.bin||''}</span>
+      </div>
+    </td>
+    <td class="small" style="white-space:nowrap;padding-left:4px">${row.kelas||''}</td>
+    <td class="small">${row.tahunAjaran||state.settings.tahunAjaran}</td>
+    <td class="small">${row.alamat||'-'}</td>
+    <td colspan="12"><div class="month-checks">${monthsHtml}</div></td>
+    <td><div class="action-btns">
+      <button class="btn-action btn-edit" onclick="openEditModal('spp','${row.id}')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+      </button>
+      <button class="btn-action btn-delete" onclick="confirmDelete('spp','${row.id}','${nameSafe}')">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </button>
+    </div></td>
+  </tr>`;
+}
+
+// Render bertahap: tampilkan chunk pertama langsung, sisanya pakai requestIdleCallback
+function _renderChunked(tbody, rows, buildFn, extraArg) {
   if (!tbody) return;
-  if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="18"><div class="empty-state">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-      <p>Belum ada data</p></div></td></tr>`;
-    return;
-  }
-  const MONTH_LABELS = ['J','F','M','A','M','J','J','A','S','O','N','D'];
-  tbody.innerHTML = filtered.map((row, i) => {
-    const months = row.months || Array(12).fill(false);
-    const monthsHtml = months.map((m, idx) => `<div class="month-check ${m?'checked':''}">${MONTH_LABELS[idx]}</div>`).join('');
-    return `<tr>
-      <td>${i+1}</td>
-      <td onclick="openEditModal('catering','${row.id}')" style="cursor:pointer;max-width:160px;padding-right:4px">
-        <div style="display:flex;flex-direction:column;gap:2px">
-          <strong style="color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;display:block">${row.nama||''}</strong>
-          <span style="font-size:12px;color:var(--text-muted);white-space:nowrap">${catCurrentTab==='santri'?'bin':'binti'} ${row.bin||''}</span>
-        </div>
-      </td>
-      <td class="small" style="padding-left:4px">${row.kamar||''}</td>
-      <td class="small">${row.alamat||''}</td>
-      <td colspan="12"><div class="month-checks">${monthsHtml}</div></td>
-      <td><div class="action-btns">
-        <button class="btn-action btn-edit" onclick="openEditModal('catering','${row.id}')">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-        </button>
-        <button class="btn-action btn-delete" onclick="confirmDelete('catering','${row.id}','${(row.nama||'').replace(/'/g,"\\'")}')">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-        </button>
-      </div></td>
-    </tr>`;
-  }).join('');
+  // Batch pertama langsung — user tidak nunggu
+  const first = rows.slice(0, _RENDER_CHUNK);
+  tbody.innerHTML = first.map((r, i) => buildFn(r, i, extraArg)).join('');
+
+  if (rows.length <= _RENDER_CHUNK) return;
+
+  // Batch berikutnya lewat idle callback agar tidak blokir scroll/input
+  let offset = _RENDER_CHUNK;
+  const scheduleNext = () => {
+    if (offset >= rows.length) return;
+    const idle = window.requestIdleCallback || (fn => setTimeout(fn, 16));
+    idle(() => {
+      const chunk = rows.slice(offset, offset + _RENDER_CHUNK);
+      const frag = document.createDocumentFragment();
+      const tmp = document.createElement('tbody');
+      tmp.innerHTML = chunk.map((r, i) => buildFn(r, offset + i, extraArg)).join('');
+      while (tmp.firstChild) frag.appendChild(tmp.firstChild);
+      tbody.appendChild(frag);
+      offset += _RENDER_CHUNK;
+      scheduleNext();
+    });
+  };
+  scheduleNext();
+}
+
+function renderCateringTable() {
+  clearTimeout(_catRenderTimer);
+  _catRenderTimer = setTimeout(() => {
+    const q = (document.getElementById('cat-search')?.value || '').toLowerCase();
+    let data = state.cateringData.filter(x => x.gender === catCurrentTab);
+    if (catFilter.kamar) data = data.filter(x => x.kamar === catFilter.kamar);
+    data = _applyStatusFilter(data, 'catering');
+    const filtered = q ? data.filter(x =>
+      (x.nama||'').toLowerCase().includes(q) ||
+      (x.bin||'').toLowerCase().includes(q) ||
+      (x.kamar||'').toLowerCase().includes(q)
+    ) : data;
+
+    const tbody = document.getElementById('catering-tbody');
+    if (!tbody) return;
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="18"><div class="empty-state">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <p>Belum ada data</p></div></td></tr>`;
+      return;
+    }
+    _renderChunked(tbody, filtered, _buildCatRow);
+  }, 80); // debounce 80ms — cukup responsif tanpa render tiap keystroke
 }
 
 // ==========================================
-// SPP TABLE
+// SPP TABLE - tab switch
 // ==========================================
 let sppCurrentTab = 'santri';
 
@@ -3466,58 +3332,35 @@ function switchSppTab(tab) {
   sppCurrentTab = tab;
   document.getElementById('spp-tab-santri').classList.toggle('active', tab === 'santri');
   document.getElementById('spp-tab-santriwati').classList.toggle('active', tab === 'santriwati');
-  // Clear search saat ganti tab supaya hasil tidak tercampur
   const s = document.getElementById('spp-search');
   if (s) s.value = '';
   renderSppTable();
 }
 
 function renderSppTable() {
-  const q = (document.getElementById('spp-search')?.value || '').toLowerCase();
-  let data = state.sppData.filter(x => x.gender === sppCurrentTab);
-  if (sppFilter.kelas) data = data.filter(x => x.kelas === sppFilter.kelas);
-  data = _applyStatusFilter(data, 'spp');
-  const filtered = q ? data.filter(x =>
-    (x.nama||'').toLowerCase().includes(q) ||
-    (x.bin||'').toLowerCase().includes(q) ||
-    (x.kelas||'').toLowerCase().includes(q)
-  ) : data;
+  clearTimeout(_sppRenderTimer);
+  _sppRenderTimer = setTimeout(() => {
+    const q = (document.getElementById('spp-search')?.value || '').toLowerCase();
+    let data = state.sppData.filter(x => x.gender === sppCurrentTab);
+    if (sppFilter.kelas) data = data.filter(x => x.kelas === sppFilter.kelas);
+    data = _applyStatusFilter(data, 'spp');
+    const filtered = q ? data.filter(x =>
+      (x.nama||'').toLowerCase().includes(q) ||
+      (x.bin||'').toLowerCase().includes(q) ||
+      (x.kelas||'').toLowerCase().includes(q)
+    ) : data;
 
-  const tbody = document.getElementById('spp-tbody');
-  if (!tbody) return;
-  if (filtered.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="18"><div class="empty-state">
-      <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-      <p>Belum ada data</p></div></td></tr>`;
-    return;
-  }
-  const binLabel = sppCurrentTab === 'santri' ? 'bin' : 'binti';
-  const MONTH_LABELS_SPP = ['J','F','M','A','M','J','J','A','S','O','N','D'];
-  tbody.innerHTML = filtered.map((row, i) => {
-    const months = row.months || Array(12).fill(false);
-    const monthsHtml = months.map((m, idx) => `<div class="month-check ${m?'checked':''}">${MONTH_LABELS_SPP[idx]}</div>`).join('');
-    return `<tr>
-      <td>${i+1}</td>
-      <td onclick="openEditModal('spp','${row.id}')" style="cursor:pointer;max-width:160px;padding-right:4px">
-        <div style="display:flex;flex-direction:column;gap:2px">
-          <strong style="color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;display:block">${row.nama||''}</strong>
-          <span style="font-size:12px;color:var(--text-muted);white-space:nowrap">${binLabel} ${row.bin||''}</span>
-        </div>
-      </td>
-      <td class="small" style="white-space:nowrap;padding-left:4px">${row.kelas||''}</td>
-      <td class="small">${row.tahunAjaran||state.settings.tahunAjaran}</td>
-      <td class="small">${row.alamat||'-'}</td>
-      <td colspan="12"><div class="month-checks">${monthsHtml}</div></td>
-      <td><div class="action-btns">
-        <button class="btn-action btn-edit" onclick="openEditModal('spp','${row.id}')">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-        </button>
-        <button class="btn-action btn-delete" onclick="confirmDelete('spp','${row.id}','${(row.nama||'').replace(/'/g,"\\'")}')">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-        </button>
-      </div></td>
-    </tr>`;
-  }).join('');
+    const tbody = document.getElementById('spp-tbody');
+    if (!tbody) return;
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="18"><div class="empty-state">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <p>Belum ada data</p></div></td></tr>`;
+      return;
+    }
+    const binLabel = sppCurrentTab === 'santri' ? 'bin' : 'binti';
+    _renderChunked(tbody, filtered, _buildSppRow, binLabel);
+  }, 80);
 }
 
 // ==========================================
@@ -3548,7 +3391,6 @@ function requireSuperAdmin(msg) {
 function applyRoleUI() {
   const role = getRole();
   const canWrite = role === 'admin' || role === 'superadmin';
-  const isSA    = role === 'superadmin';
 
   // Tombol + Tambah di halaman catering & spp
   document.querySelectorAll('.btn-add').forEach(b => {
@@ -3557,14 +3399,9 @@ function applyRoleUI() {
 
   // Menu setting: sembunyikan yg butuh admin/superadmin untuk viewer
   const adminOnlyRows = ['tarif-catering','tarif-spp','tahun-ajaran','data-kelas','data-kamar','reset-centang','naik-kelas','import-data'];
-  const superAdminOnlyRows = ['manajemen-user'];
   adminOnlyRows.forEach(name => {
     const el = document.querySelector(`[onclick*="openSubPage('${name}')"]`);
     if (el) el.style.display = canWrite ? '' : 'none';
-  });
-  superAdminOnlyRows.forEach(name => {
-    const el = document.querySelector(`[onclick*="openSubPage('${name}')"]`);
-    if (el) el.style.display = isSA ? '' : 'none';
   });
 }
 
@@ -3855,10 +3692,8 @@ function openSubPage(name) {
   if (!el) return;
 
   // Guard per fitur
-  const adminPages      = ['tarif-catering','tarif-spp','tahun-ajaran','data-kelas','data-kamar','reset-centang','naik-kelas','import-data'];
-  const superAdminPages = ['manajemen-user'];
+  const adminPages = ['tarif-catering','tarif-spp','tahun-ajaran','data-kelas','data-kamar','reset-centang','naik-kelas','import-data'];
   if (adminPages.includes(name) && !requireAdmin()) return;
-  if (superAdminPages.includes(name) && !requireSuperAdmin()) return;
 
   el.style.display = 'flex';
   requestAnimationFrame(() => el.classList.add('show'));
@@ -3887,7 +3722,6 @@ function openSubPage(name) {
   if (name === 'reset-centang') initResetCentang();
   if (name === 'rekap-bulanan') initRekapBulanan();
   if (name === 'naik-kelas') initNaikKelas();
-  if (name === 'manajemen-user') loadUserList();
   if (name === 'backup-data') _updateBackupStats();
   if (name === 'import-data') { _importData = []; document.getElementById('import-preview-card').style.display = 'none'; document.getElementById('import-progress').style.display = 'none'; }
 }
@@ -5747,212 +5581,6 @@ async function doImport() {
 
 // ==========================================
 // MANAJEMEN USER
-// ==========================================
-// ==========================================
-// MANAJEMEN USER
-// ==========================================
-async function loadUserList() {
-  const el  = document.getElementById('user-list-container');
-  const sub = document.getElementById('user-list-subtitle');
-  el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">⏳ Memuat...</div>';
-  try {
-    const { data, error } = await sb.from('users').select('*').order('name');
-    if (error) throw error;
-    sub.textContent = `${data.length} user terdaftar`;
-    if (!data.length) { el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">Belum ada user</div>'; return; }
-
-    const roleLabel = { superadmin:'Super Admin', admin:'Admin', viewer:'Viewer' };
-    const roleColor = { superadmin:'#7c3aed', admin:'var(--primary)', viewer:'#64748b' };
-    const roleBg    = { superadmin:'rgba(124,58,237,0.1)', admin:'var(--primary-light)', viewer:'rgba(100,116,139,0.1)' };
-
-    el.innerHTML = data.map(u => {
-      const initial    = (u.name || u.username || '?')[0].toUpperCase();
-      const isSelf     = state.user && state.user.username === u.username;
-      const activeClr  = u.active ? '#22c55e' : '#9ca3af';
-      const rl         = u.role || 'viewer';
-      return `
-      <div style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--card-border)">
-        <!-- Avatar -->
-        <div style="width:42px;height:42px;border-radius:12px;background:${u.active ? 'linear-gradient(135deg,var(--primary),var(--primary-dark))' : '#9ca3af'};display:flex;align-items:center;justify-content:center;font-family:Sora,sans-serif;font-size:16px;font-weight:800;color:white;flex-shrink:0">${initial}</div>
-        <!-- Info -->
-        <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:800;color:var(--text-primary);margin-bottom:2px;display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-            ${u.name || u.username}
-            <span style="font-size:10px;font-weight:700;color:${roleColor[rl]};background:${roleBg[rl]};padding:2px 7px;border-radius:5px">${roleLabel[rl]||rl}</span>
-            ${!u.active ? '<span style="font-size:10px;font-weight:700;color:#9ca3af;background:rgba(156,163,175,0.15);padding:2px 7px;border-radius:5px">Nonaktif</span>' : ''}
-            ${isSelf ? '<span style="font-size:10px;font-weight:700;color:var(--primary);background:var(--primary-light);padding:2px 7px;border-radius:5px">Anda</span>' : ''}
-          </div>
-          <div style="font-size:11px;color:var(--text-muted);font-weight:600">@${u.username}</div>
-        </div>
-        <!-- Aksi -->
-        ${isSelf ? '' : `<div style="display:flex;gap:6px;flex-shrink:0">
-          <button onclick="konfirmasiToggleUser('${u.id}','${(u.name||u.username).replace(/'/g,"\\'")}',${!u.active})"
-            title="${u.active ? 'Nonaktifkan' : 'Aktifkan'}"
-            style="width:32px;height:32px;border-radius:8px;border:none;background:${u.active?'rgba(34,197,94,0.1)':'rgba(156,163,175,0.15)'};color:${activeClr};cursor:pointer;display:flex;align-items:center;justify-content:center">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="15" height="15"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${u.active ? 'M5 13l4 4L19 7' : 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636'}"/></svg>
-          </button>
-          <button onclick="openUbahPwUser('${u.id}','${(u.name||u.username).replace(/'/g,"\\'")}')"
-            title="Ubah Password"
-            style="width:32px;height:32px;border-radius:8px;border:none;background:rgba(245,158,11,0.1);color:#d97706;cursor:pointer;display:flex;align-items:center;justify-content:center">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-          </button>
-          <button onclick="konfirmasiHapusUser('${u.id}','${(u.name||u.username).replace(/'/g,"\\'")}')"
-            title="Hapus User"
-            style="width:32px;height:32px;border-radius:8px;border:none;background:rgba(239,68,68,0.1);color:#ef4444;cursor:pointer;display:flex;align-items:center;justify-content:center">
-            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="14" height="14"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-          </button>
-        </div>`}
-      </div>`;
-    }).join('');
-  } catch(e) {
-    el.innerHTML = `<div style="text-align:center;padding:16px;color:#ef4444;font-size:13px">❌ ${e.message}</div>`;
-  }
-}
-
-// Konfirmasi sebelum tambah user
-function konfirmasiTambahUser() {
-  const name     = document.getElementById('new-user-name').value.trim();
-  const username = document.getElementById('new-user-username').value.trim().toLowerCase();
-  const password = document.getElementById('new-user-password').value;
-  const role     = document.getElementById('new-user-role').value;
-  const roleLabel = { superadmin:'Super Admin', admin:'Admin', viewer:'Viewer' };
-
-  if (!name || !username || !password) { showToast('Lengkapi semua field', 'error'); return; }
-  if (password.length < 6) { showToast('Password minimal 6 karakter', 'error'); return; }
-  if (!/^[a-z0-9_]+$/.test(username)) { showToast('Username hanya boleh huruf kecil, angka, underscore', 'error'); return; }
-
-  showKonfirmasi(
-    `Tambah user baru @${username} dengan role ${roleLabel[role]||role}?`,
-    '+ Tambah',
-    '#22c55e',
-    () => tambahUser(name, username, password, role),
-    'Tambah User Baru?',
-    'user'
-  );
-}
-
-async function tambahUser(name, username, password, role) {
-  const btn = document.getElementById('btn-tambah-user-text');
-  btn.textContent = '⏳ Menyimpan...';
-  try {
-    const { data: existing } = await sb.from('users').select('id').eq('username', username).maybeSingle();
-    if (existing) { showToast(`❌ Username @${username} sudah dipakai`, 'error'); btn.textContent = 'Tambah User'; return; }
-
-    const email = `${username}@dafalah.id`;
-    const { data: authData, error: authErr } = await sb.auth.signUp({ email, password });
-    let authId = authData?.user?.id;
-    if (!authId) {
-      authId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-        const r = Math.random() * 16 | 0;
-        return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-      });
-    }
-
-    const { error: dbErr } = await sb.from('users').insert([{ id: authId, name, username, role, active: true }]);
-    if (dbErr) throw dbErr;
-
-    showToast(`✅ User @${username} berhasil ditambahkan`, 'success');
-    ['new-user-name','new-user-username','new-user-password'].forEach(id => {
-      const el = document.getElementById(id); if (el) el.value = '';
-    });
-    loadUserList();
-  } catch(e) {
-    if (e.message?.includes('row-level security')) {
-      showToast('❌ RLS aktif — nonaktifkan RLS tabel users di Supabase', 'error');
-    } else {
-      showToast('❌ Gagal: ' + e.message, 'error');
-    }
-  }
-  btn.textContent = 'Tambah User';
-}
-
-// Konfirmasi toggle aktif/nonaktif user
-function konfirmasiToggleUser(id, name, newActive) {
-  const aksi = newActive ? 'mengaktifkan' : 'menonaktifkan';
-  showKonfirmasi(
-    `Yakin ingin ${aksi} user "${name}"?`,
-    newActive ? '✅ Aktifkan' : '🚫 Nonaktifkan',
-    newActive ? '#22c55e' : '#f59e0b',
-    () => toggleUserActive(id, newActive),
-    newActive ? 'Aktifkan User?' : 'Nonaktifkan User?',
-    'user'
-  );
-}
-
-async function toggleUserActive(id, newActive) {
-  try {
-    const { error } = await sb.from('users').update({ active: newActive }).eq('id', id);
-    if (error) throw error;
-    showToast(newActive ? '✅ User diaktifkan' : '✅ User dinonaktifkan', 'success');
-    loadUserList();
-  } catch(e) { showToast('❌ Gagal: ' + e.message, 'error'); }
-}
-
-// Konfirmasi hapus user
-function konfirmasiHapusUser(id, name) {
-  showKonfirmasi(
-    `Hapus user "${name}" secara permanen? Tindakan ini tidak bisa dibatalkan.`,
-    'Hapus',
-    '#ef4444',
-    () => hapusUser(id, name),
-    'Hapus User?',
-    'delete'
-  );
-}
-
-async function hapusUser(id, name) {
-  try {
-    const { error } = await sb.from('users').delete().eq('id', id);
-    if (error) throw error;
-    showToast('✅ User berhasil dihapus', 'success');
-    loadUserList();
-  } catch(e) { showToast('❌ Gagal: ' + e.message, 'error'); }
-}
-
-// Modal ubah password user
-let _ubahPwUserId = null;
-function openUbahPwUser(id, name) {
-  _ubahPwUserId = id;
-  document.getElementById('modal-ubah-pw-user-label').textContent = name;
-  document.getElementById('ubah-pw-user-new').value = '';
-  document.getElementById('ubah-pw-user-confirm').value = '';
-  document.getElementById('btn-ubah-pw-user-text').textContent = 'Simpan Password Baru';
-  document.getElementById('modal-ubah-pw-user').style.display = 'flex';
-}
-function closeUbahPwUserModal() {
-  document.getElementById('modal-ubah-pw-user').style.display = 'none';
-  _ubahPwUserId = null;
-}
-async function doUbahPwUser() {
-  const newPw  = document.getElementById('ubah-pw-user-new').value;
-  const konfPw = document.getElementById('ubah-pw-user-confirm').value;
-  if (!newPw) { showToast('Isi password baru', 'error'); return; }
-  if (newPw.length < 6) { showToast('Password minimal 6 karakter', 'error'); return; }
-  if (newPw !== konfPw) { showToast('Konfirmasi password tidak cocok', 'error'); return; }
-  if (!_ubahPwUserId) { showToast('User tidak ditemukan', 'error'); return; }
-
-  const label = document.getElementById('modal-ubah-pw-user-label').textContent;
-  closeUbahPwUserModal();
-  showKonfirmasi(
-    `Yakin ubah password untuk "${label}"?`,
-    '🔑 Ya, Ubah',
-    '#f59e0b',
-    async () => {
-      const btn = document.getElementById('btn-ubah-pw-user-text');
-      try {
-        const res = await callScript('changePassword', { userId: _ubahPwUserId, newPassword: newPw, force: true });
-        if (res.success) {
-          showToast(`✅ Password "${label}" berhasil diubah`, 'success');
-        } else {
-          showToast(res.error || 'Gagal mengubah password', 'error');
-        }
-      } catch(e) { showToast('❌ Gagal: ' + e.message, 'error'); }
-    },
-    'Ubah Password?',
-    'warning'
-  );
-}
-
 // ==========================================
 // BACKUP & RESTORE
 // ==========================================
