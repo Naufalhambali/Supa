@@ -1028,6 +1028,11 @@ td.small { font-size: 11px; color: var(--text-secondary); }
   padding-top: max(14px, env(safe-area-inset-top));
   box-shadow: 0 2px 16px rgba(0,0,0,0.15);
 }
+.sub-page-header h2 {
+  font-family: 'Sora', sans-serif;
+  font-size: 18px; font-weight: 800; color: white;
+  flex: 1; /* ambil sisa ruang agar tombol action terdorong ke kanan */
+}
 .btn-back {
   background: rgba(255,255,255,0.18); backdrop-filter: blur(8px);
   border: 1px solid rgba(255,255,255,0.2);
@@ -1037,10 +1042,17 @@ td.small { font-size: 11px; color: var(--text-secondary); }
 }
 .btn-back:active { background: rgba(255,255,255,0.28); }
 .btn-back svg { width: 18px; height: 18px; }
-.sub-page-header h2 {
-  font-family: 'Sora', sans-serif;
-  font-size: 18px; font-weight: 800; color: white;
+/* Tombol aksi di kanan header sub-page (misal: Export PDF) */
+.btn-header-action {
+  display: flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.18); backdrop-filter: blur(8px);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 10px; padding: 7px 12px;
+  font-size: 12px; font-weight: 700; color: white;
+  flex-shrink: 0; white-space: nowrap; transition: background 0.15s;
 }
+.btn-header-action:active { background: rgba(255,255,255,0.3); }
+.btn-header-action svg { width: 14px; height: 14px; }
 .sub-page-content { flex: 1; overflow-y: auto; padding: 16px; }
 
 /* ── PRINT ── */
@@ -1082,6 +1094,12 @@ body:has(#offline-banner[style*="flex"]) .screen.active {
 <div id="app">
 
   <!-- ===== LOGIN SCREEN ===== -->
+  <!-- Offline Banner -->
+  <div id="offline-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:99999;padding:8px 16px;align-items:center;justify-content:space-between;gap:8px;background:#ef4444;font-size:12px;font-weight:700;color:white;box-shadow:0 2px 8px rgba(0,0,0,0.25)">
+    <span id="offline-pending-count">📵 Mode Offline — data tersimpan lokal</span>
+    <button id="btn-manual-sync" onclick="replayOfflineQueue()" style="display:none;background:rgba(255,255,255,0.2);border:none;border-radius:8px;padding:4px 10px;color:white;font-size:11px;font-weight:700;cursor:pointer">🔄 Sync Sekarang</button>
+  </div>
+
   <div id="screen-login" class="screen active">
     <div class="login-hero">
       <div class="login-logo">
@@ -1734,20 +1752,27 @@ body:has(#offline-banner[style*="flex"]) .screen.active {
     <div class="sub-page-header">
       <button onclick="closeSubPage('laporan-tunggakan')" class="btn-back"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg></button>
       <h2>Laporan Tunggakan</h2>
+      <!-- Tombol Export PDF di header kanan -->
+      <button id="btn-export-pdf" onclick="exportTunggakanPDF()" class="btn-header-action" style="display:none">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        Export PDF
+      </button>
     </div>
     <div class="sub-page-content" style="padding:12px">
 
-      <!-- Filter Bar (bulan + tab dalam satu baris) -->
-      <div class="section-card" style="margin-bottom:10px;padding:12px">
+      <!-- Filter Bar: navigasi bulan + tab jenis dalam satu card -->
+      <div class="section-card" style="margin-bottom:10px;padding:12px 14px">
+        <!-- Navigasi bulan -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
           <button class="btn-nav-month" onclick="navTunggakanMonth(-1)">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
           </button>
-          <div style="font-size:14px;font-weight:800;color:var(--text-primary)" id="tunggakan-month-label">-</div>
+          <div style="font-size:15px;font-weight:800;color:var(--text-primary)" id="tunggakan-month-label">-</div>
           <button class="btn-nav-month" onclick="navTunggakanMonth(1)" id="tunggakan-btn-next">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
           </button>
         </div>
+        <!-- Tab filter jenis -->
         <div class="tunggakan-tabs" style="margin-bottom:0">
           <div class="tunggakan-tab active" id="ltab-semua"    onclick="switchLaporanTab('semua')">Semua</div>
           <div class="tunggakan-tab"        id="ltab-spp"      onclick="switchLaporanTab('spp')">SPP</div>
@@ -1755,20 +1780,20 @@ body:has(#offline-banner[style*="flex"]) .screen.active {
         </div>
       </div>
 
-      <!-- Summary ringkas -->
+      <!-- Summary cards: muncul setelah data load -->
       <div id="laporan-summary"></div>
 
-      <!-- Tabel scroll seperti SPP/Catering -->
-      <div class="table-wrap" style="margin-bottom:10px">
+      <!-- Tabel tunggakan -->
+      <div class="table-wrap">
         <div class="table-scroll">
           <table id="laporan-table">
             <thead>
               <tr>
-                <th>No</th>
+                <th style="width:36px;text-align:center">No</th>
                 <th>Nama Santri</th>
-                <th>Kelas/Kamar</th>
-                <th>Jenis</th>
-                <th>Nominal</th>
+                <th>Kelas / Kamar</th>
+                <th style="text-align:center">Jenis</th>
+                <th style="text-align:right">Nominal</th>
               </tr>
             </thead>
             <tbody id="laporan-tbody">
@@ -1777,14 +1802,6 @@ body:has(#offline-banner[style*="flex"]) .screen.active {
           </table>
         </div>
       </div>
-
-      <!-- Export PDF -->
-      <button class="btn-rekap" id="btn-export-pdf" onclick="exportTunggakanPDF()" style="display:none">
-        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="16" height="16">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-        </svg>
-        Export PDF
-      </button>
 
     </div>
   </div>
@@ -2241,6 +2258,7 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY, {
   }
 });
 
+
 // ==========================================
 // APP STATE
 // ==========================================
@@ -2265,8 +2283,13 @@ const MONTHS      = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt'
 const MONTHS_FULL = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 
 // ==========================================
-// LOCAL STORAGE
+// OFFLINE SYNC — IndexedDB Queue
 // ==========================================
+// OFFLINE SYNC — variabel state
+// Fungsi lengkap ada di bagian bawah file
+// ==========================================
+// _isOnline dideklarasikan di blok offline system bawah file
+
 function saveLocal() {
   localStorage.setItem('df_sb', JSON.stringify({
     loggedIn:     state.loggedIn,
@@ -2408,9 +2431,25 @@ async function _callScriptDirect(action, data = {}) {
   }
 }
 
-// callScript = offline-aware wrapper (didefinisikan penuh di bawah, setelah offline system)
-// Gunakan fungsi async sederhana yang akan di-patch saat initOfflineSystem() jalan
+// callScript — offline-aware, langsung routing ke _callScriptDirect atau antrian IndexedDB
+// Tidak perlu di-patch runtime; _isOnline dan queueOfflineOp tersedia di scope global
 async function callScript(action, data = {}) {
+  // Aksi read — selalu langsung ke Supabase
+  const READ_ACTIONS = ['getCatering','getSpp','getSettings','getMonthlyFinance',
+    'getTotalTahunan','getRekapStatus','login','logout','changePassword'];
+  if (READ_ACTIONS.includes(action)) {
+    return _callScriptDirect(action, data);
+  }
+  // Aksi mutasi — jika offline, antri ke IndexedDB
+  const MUTATION_ACTIONS = ['saveCatering','saveSpp','deleteCatering','deleteSpp',
+    'saveSettings','resetCentangBulan','saveRekapBulanan'];
+  if (typeof _isOnline !== 'undefined' && !_isOnline && MUTATION_ACTIONS.includes(action)) {
+    if (typeof queueOfflineOp === 'function') {
+      await queueOfflineOp(action, data);
+      if (typeof updatePendingBadge === 'function') await updatePendingBadge();
+    }
+    return { success: true, _queued: true };
+  }
   return _callScriptDirect(action, data);
 }
 
@@ -2759,7 +2798,7 @@ function enterApp() {
   invalidateCache();
   loadAllData(true);
   resetAutoLogout();
-  refreshUserRole(); // selalu sync role terbaru dari Supabase
+  refreshUserRole();
 }
 
 function confirmLogout() {
@@ -4297,7 +4336,7 @@ async function loadLaporanTunggakan() {
       </div>
     </div>`;
 
-  if (btnPdf) btnPdf.style.display = '';
+  if (btnPdf) btnPdf.style.display = 'flex';
   renderLaporanList();
 }
 
@@ -5926,7 +5965,8 @@ async function replayOfflineQueue() {
 
   for (const op of ops) {
     try {
-      const res = await callScript(op.action, op.data);
+      // Langsung ke Supabase — bypass wrapper agar tidak loop
+      const res = await _callScriptDirect(op.action, op.data);
       if (res.success) {
         await removeQueuedOp(op.qid);
         success++;
@@ -5944,7 +5984,6 @@ async function replayOfflineQueue() {
 
   if (fail === 0) {
     showToast(`✅ ${success} perubahan berhasil disinkronkan`, 'success');
-    // Refresh data dari server setelah sync berhasil
     invalidateCache();
     await loadAllData(true);
   } else {
@@ -5952,36 +5991,14 @@ async function replayOfflineQueue() {
   }
 }
 
-// Override callScript agar mutasi saat offline masuk ke antrian
-// (patch dilakukan saat initOfflineSystem dipanggil)
-async function callScriptOfflineWrapper(action, data = {}) {
-  // Aksi read — selalu coba online, fallback ke cache lokal (state sudah ada)
-  const READ_ACTIONS = ['getCatering','getSpp','getSettings','getMonthlyFinance','getTotalTahunan','getRekapStatus','login','logout'];
-  if (READ_ACTIONS.includes(action)) {
-    return _callScriptDirect(action, data);
-  }
-
-  // Aksi mutasi — jika offline, masuk antrian IndexedDB
-  const MUTATION_ACTIONS = ['saveCatering','saveSpp','deleteCatering','deleteSpp','saveSettings','resetCentangBulan'];
-  if (!_isOnline && MUTATION_ACTIONS.includes(action)) {
-    await queueOfflineOp(action, data);
-    await updatePendingBadge();
-    return { success: true, _queued: true };
-  }
-
-  // Online — jalankan langsung ke Supabase
-  return _callScriptDirect(action, data);
-}
-
 // Event listener online/offline
 window.addEventListener('online', async () => {
   _isOnline = true;
   updateOfflineBanner();
   await updatePendingBadge();
-  // Auto-sync saat kembali online
   const count = await getQueueCount();
   if (count > 0) {
-    setTimeout(() => replayOfflineQueue(), 1500); // delay 1.5s beri waktu koneksi stabil
+    setTimeout(() => replayOfflineQueue(), 1500);
   } else {
     showToast('✅ Kembali online', 'success');
     invalidateCache();
@@ -5998,9 +6015,6 @@ window.addEventListener('offline', async () => {
 
 // Inisialisasi offline system — dipanggil setelah init()
 async function initOfflineSystem() {
-  // Patch callScript dengan versi offline-aware
-  window.callScript = callScriptOfflineWrapper;
-
   await openIDB(); // pastikan IDB siap
   _isOnline = navigator.onLine;
   updateOfflineBanner();
