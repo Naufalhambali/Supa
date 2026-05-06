@@ -1071,6 +1071,11 @@ td.small { font-size: 11px; color: var(--text-secondary); }
 
 body.modal-open { overflow: hidden; }
 
+/* Offline banner — push screen content down when visible */
+body:has(#offline-banner[style*="flex"]) .screen.active {
+  padding-top: 42px;
+}
+
 </style>
 </head>
 <body>
@@ -1113,6 +1118,15 @@ body.modal-open { overflow: hidden; }
   </div>
 
   <!-- ===== MAIN APP ===== -->
+  <!-- OFFLINE BANNER -->
+  <div id="offline-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(135deg,#1e293b,#334155);color:white;padding:10px 16px;align-items:center;gap:10px;font-size:12px;font-weight:700;box-shadow:0 2px 12px rgba(0,0,0,0.3)">
+    <span style="font-size:16px">📵</span>
+    <span id="offline-pending-count" style="flex:1">Mode Offline — data tersimpan lokal</span>
+    <button id="btn-manual-sync" onclick="replayOfflineQueue()" style="display:none;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.3);color:white;border-radius:8px;padding:5px 12px;font-size:11px;font-weight:800;cursor:pointer;white-space:nowrap">
+      🔄 Sync Sekarang
+    </button>
+  </div>
+
   <div id="screen-main" class="screen">
     <!-- PULL TO REFRESH INDICATOR -->
 
@@ -2372,7 +2386,7 @@ function _monthsToObj(months) {
 // ==========================================
 // SUPABASE API
 // ==========================================
-async function callScript(action, data = {}) {
+async function _callScriptDirect(action, data = {}) {
   switch(action) {
     case 'login':             return sbLogin(data);
     case 'logout':            return { success: true };
@@ -2392,6 +2406,12 @@ async function callScript(action, data = {}) {
     case 'getRekapStatus':    return sbGetRekapStatus(data);
     default: return { success: false, error: `Action '${action}' tidak dikenal` };
   }
+}
+
+// callScript = offline-aware wrapper (didefinisikan penuh di bawah, setelah offline system)
+// Gunakan fungsi async sederhana yang akan di-patch saat initOfflineSystem() jalan
+async function callScript(action, data = {}) {
+  return _callScriptDirect(action, data);
 }
 
 async function sbLogin({ username, password }) {
@@ -2594,17 +2614,25 @@ async function sbResetCentangBulan({ resetSpp, resetCat }) {
 
 async function sbChangePassword({ oldPassword, newPassword }) {
   try {
-    // Re-auth dulu untuk verifikasi password lama
+    // Verifikasi password lama dengan re-auth
     const email = state.user.username.includes('@')
       ? state.user.username
       : `${state.user.username}@dafalah.id`;
     const { error: reAuthError } = await sb.auth.signInWithPassword({ email, password: oldPassword });
-    if (reAuthError) return { success: false, error: 'Password lama salah' };
-    // Update password via Supabase Auth
+    if (reAuthError) {
+      // Bedakan error network vs password salah
+      if (reAuthError.message.toLowerCase().includes('invalid') ||
+          reAuthError.message.toLowerCase().includes('credentials') ||
+          reAuthError.message.toLowerCase().includes('password')) {
+        return { success: false, error: 'Password lama salah' };
+      }
+      return { success: false, error: 'Gagal verifikasi: ' + reAuthError.message };
+    }
+    // Update password
     const { error } = await sb.auth.updateUser({ password: newPassword });
-    if (error) throw error;
+    if (error) return { success: false, error: error.message };
     return { success: true };
-  } catch(e) { return { success: false, error: e.message }; }
+  } catch(e) { return { success: false, error: 'Koneksi gagal: ' + e.message }; }
 }
 
 
@@ -4869,23 +4897,6 @@ async function doPindahKamar(id) {
   } catch(e) { showToast('Gagal: ' + e.message, 'error'); }
 }
 
-async function toggleAktif(id, type) {
-  const data  = type === 'spp' ? state.sppData : state.cateringData;
-  const table = type === 'spp' ? 'spp' : 'catering';
-  const idx   = data.findIndex(r => r.id === id);
-  if (idx === -1) return;
-  const newVal = !(data[idx].isAktif !== false);
-  try {
-    const { error } = await sb.from(table).update({ is_aktif: newVal }).eq('id', id);
-    if (error) throw error;
-    data[idx].isAktif = newVal;
-    renderNaikList();
-    showToast(newVal ? 'Santri diaktifkan' : 'Santri dinonaktifkan', 'success');
-  } catch(e) { showToast('Gagal: ' + e.message, 'error'); }
-}
-
-
-
 // ==========================================
 // REKAP BULANAN
 // ==========================================
@@ -5807,7 +5818,207 @@ async function eksekusiRestore(backup) {
   } catch(e) { showToast('❌ Restore gagal: ' + e.message, 'error'); }
 }
 
+// ==========================================
+// OFFLINE MODE — IndexedDB Sync Queue
+// Setiap mutasi (add/edit/delete centang) saat offline
+// disimpan ke IndexedDB dan di-replay saat kembali online.
+// ==========================================
+
+const IDB_NAME    = 'dafalah_offline';
+const IDB_STORE   = 'sync_queue';
+const IDB_VERSION = 1;
+
+let _idb = null;
+let _isOnline = navigator.onLine;
+
+// Buka/buat IndexedDB
+function openIDB() {
+  if (_idb) return Promise.resolve(_idb);
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) {
+        const store = db.createObjectStore(IDB_STORE, { keyPath: 'qid', autoIncrement: true });
+        store.createIndex('ts', 'ts', { unique: false });
+      }
+    };
+    req.onsuccess  = e => { _idb = e.target.result; res(_idb); };
+    req.onerror    = e => rej(e.target.error);
+  });
+}
+
+// Tambah operasi ke antrian offline
+async function queueOfflineOp(action, data) {
+  const db = await openIDB();
+  return new Promise((res, rej) => {
+    const tx    = db.transaction(IDB_STORE, 'readwrite');
+    const store = tx.objectStore(IDB_STORE);
+    store.add({ action, data, ts: Date.now() });
+    tx.oncomplete = res;
+    tx.onerror    = e => rej(e.target.error);
+  });
+}
+
+// Ambil semua operasi dari antrian
+async function getAllQueuedOps() {
+  const db = await openIDB();
+  return new Promise((res, rej) => {
+    const tx    = db.transaction(IDB_STORE, 'readonly');
+    const store = tx.objectStore(IDB_STORE);
+    const req   = store.getAll();
+    req.onsuccess = e => res(e.target.result || []);
+    req.onerror   = e => rej(e.target.error);
+  });
+}
+
+// Hapus operasi dari antrian berdasarkan qid
+async function removeQueuedOp(qid) {
+  const db = await openIDB();
+  return new Promise((res, rej) => {
+    const tx    = db.transaction(IDB_STORE, 'readwrite');
+    const store = tx.objectStore(IDB_STORE);
+    store.delete(qid);
+    tx.oncomplete = res;
+    tx.onerror    = e => rej(e.target.error);
+  });
+}
+
+// Hitung jumlah operasi pending
+async function getQueueCount() {
+  const db = await openIDB();
+  return new Promise((res) => {
+    const tx    = db.transaction(IDB_STORE, 'readonly');
+    const store = tx.objectStore(IDB_STORE);
+    const req   = store.count();
+    req.onsuccess = e => res(e.target.result);
+    req.onerror   = () => res(0);
+  });
+}
+
+// Tampilkan/sembunyikan banner offline
+function updateOfflineBanner() {
+  let banner = document.getElementById('offline-banner');
+  if (!banner) return;
+  if (_isOnline) {
+    banner.style.display = 'none';
+  } else {
+    banner.style.display = 'flex';
+  }
+}
+
+// Update badge jumlah operasi pending di banner
+async function updatePendingBadge() {
+  const count = await getQueueCount();
+  const badge = document.getElementById('offline-pending-count');
+  const syncBtn = document.getElementById('btn-manual-sync');
+  if (badge) badge.textContent = count > 0 ? `${count} perubahan menunggu sinkronisasi` : 'Mode Offline — data tersimpan lokal';
+  if (syncBtn) syncBtn.style.display = (!_isOnline || count === 0) ? 'none' : 'flex';
+}
+
+// Replay seluruh antrian ke Supabase
+async function replayOfflineQueue() {
+  const ops = await getAllQueuedOps();
+  if (!ops.length) return;
+
+  showToast(`🔄 Menyinkronkan ${ops.length} perubahan...`, '');
+  let success = 0, fail = 0;
+
+  for (const op of ops) {
+    try {
+      const res = await callScript(op.action, op.data);
+      if (res.success) {
+        await removeQueuedOp(op.qid);
+        success++;
+      } else {
+        fail++;
+        console.warn('Sync gagal:', op.action, res.error);
+      }
+    } catch(e) {
+      fail++;
+      console.warn('Sync error:', op.action, e.message);
+    }
+  }
+
+  await updatePendingBadge();
+
+  if (fail === 0) {
+    showToast(`✅ ${success} perubahan berhasil disinkronkan`, 'success');
+    // Refresh data dari server setelah sync berhasil
+    invalidateCache();
+    await loadAllData(true);
+  } else {
+    showToast(`⚠️ ${success} berhasil, ${fail} gagal. Coba lagi nanti.`, 'error');
+  }
+}
+
+// Override callScript agar mutasi saat offline masuk ke antrian
+// (patch dilakukan saat initOfflineSystem dipanggil)
+async function callScriptOfflineWrapper(action, data = {}) {
+  // Aksi read — selalu coba online, fallback ke cache lokal (state sudah ada)
+  const READ_ACTIONS = ['getCatering','getSpp','getSettings','getMonthlyFinance','getTotalTahunan','getRekapStatus','login','logout'];
+  if (READ_ACTIONS.includes(action)) {
+    return _callScriptDirect(action, data);
+  }
+
+  // Aksi mutasi — jika offline, masuk antrian IndexedDB
+  const MUTATION_ACTIONS = ['saveCatering','saveSpp','deleteCatering','deleteSpp','saveSettings','resetCentangBulan'];
+  if (!_isOnline && MUTATION_ACTIONS.includes(action)) {
+    await queueOfflineOp(action, data);
+    await updatePendingBadge();
+    return { success: true, _queued: true };
+  }
+
+  // Online — jalankan langsung ke Supabase
+  return _callScriptDirect(action, data);
+}
+
+// Event listener online/offline
+window.addEventListener('online', async () => {
+  _isOnline = true;
+  updateOfflineBanner();
+  await updatePendingBadge();
+  // Auto-sync saat kembali online
+  const count = await getQueueCount();
+  if (count > 0) {
+    setTimeout(() => replayOfflineQueue(), 1500); // delay 1.5s beri waktu koneksi stabil
+  } else {
+    showToast('✅ Kembali online', 'success');
+    invalidateCache();
+    loadAllData(true);
+  }
+});
+
+window.addEventListener('offline', async () => {
+  _isOnline = false;
+  updateOfflineBanner();
+  await updatePendingBadge();
+  showToast('📵 Offline — perubahan disimpan lokal', '');
+});
+
+// Inisialisasi offline system — dipanggil setelah init()
+async function initOfflineSystem() {
+  // Patch callScript dengan versi offline-aware
+  window.callScript = callScriptOfflineWrapper;
+
+  await openIDB(); // pastikan IDB siap
+  _isOnline = navigator.onLine;
+  updateOfflineBanner();
+  await updatePendingBadge();
+  // Jika ada pending ops dan online, auto-sync
+  if (_isOnline) {
+    const count = await getQueueCount();
+    if (count > 0) {
+      setTimeout(() => {
+        showToast(`🔄 Ada ${count} perubahan offline. Menyinkronkan...`, '');
+        replayOfflineQueue();
+      }, 2000);
+    }
+  }
+}
+
 init();
+initOfflineSystem();
 </script>
 </body>
 </html>
