@@ -220,7 +220,7 @@ a { text-decoration: none; color: inherit; }
 /* ══════════════════════════════════════════
    MAIN APP
 ══════════════════════════════════════════ */
-#screen-main { flex-direction: row; }
+#screen-main { flex-direction: column; }
 
 /* ── TOP HEADER ── */
 .top-header {
@@ -820,6 +820,13 @@ td.small { font-size: 11px; color: var(--text-secondary); }
 .import-progress-fill { height: 100%; background: var(--primary); border-radius: 3px; transition: width 0.3s; }
 
 
+/* Realtime indicator */
+@keyframes rtPulse {
+  0%, 100% { opacity:1; transform:scale(1); }
+  50%       { opacity:.4; transform:scale(.8); }
+}
+#realtime-indicator { transition: transform 0.15s ease; }
+
 /* Export option sheet */
 .export-option {
   display: flex; align-items: center; gap: 14px;
@@ -1188,13 +1195,16 @@ body:has(#offline-banner[style*="flex"]) .screen.active {
         <!-- Cache indicator -->
         <div id="cache-bar" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding:7px 12px;background:var(--card);border-radius:10px;border:1px solid var(--card-border)">
           <span id="cache-indicator" style="font-size:11px;color:var(--text-muted);font-weight:600">🕐 Memuat data...</span>
-          <button onclick="loadAllData(true)" id="btn-refresh" style="font-size:11px;font-weight:700;color:var(--primary);background:none;border:none;cursor:pointer;padding:2px 6px;display:flex;align-items:center;gap:4px">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span id="realtime-indicator"></span>
+            <button onclick="loadAllData(true)" id="btn-refresh" style="font-size:11px;font-weight:700;color:var(--primary);background:none;border:none;cursor:pointer;padding:2px 6px;display:flex;align-items:center;gap:4px">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" width="13" height="13" id="refresh-icon">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
             </svg>
             Refresh
           </button>
         </div>
+        </div><!-- /cache-bar -->
 
         <!-- Stat Cards -->
         <div class="stat-cards">
@@ -2255,8 +2265,251 @@ const sb = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
     persistSession: true,
     autoRefreshToken: true
+  },
+  realtime: {
+    params: { eventsPerSecond: 10 }
   }
 });
+
+// ==========================================
+// REALTIME SYNC
+// ==========================================
+let _realtimeChannel  = null;
+let _realtimePingTimer = null;
+
+function _applyRealtimeChange(table, eventType, newRow, oldRow) {
+  const isCat = table === 'catering';
+  const arr   = isCat ? state.cateringData : state.sppData;
+  const toObj = isCat ? _rowToCatering : _rowToSpp;
+
+  if (eventType === 'INSERT') {
+    if (!arr.find(r => r.id === newRow.id)) {
+      arr.push(toObj(newRow));
+      _onRealtimeUpdate(table, 'tambah');
+    }
+  } else if (eventType === 'UPDATE') {
+    const idx = arr.findIndex(r => r.id === newRow.id);
+    if (idx !== -1) arr[idx] = toObj(newRow);
+    else arr.push(toObj(newRow));
+    _onRealtimeUpdate(table, 'update');
+  } else if (eventType === 'DELETE') {
+    const id  = (oldRow && oldRow.id) || (newRow && newRow.id);
+    const idx = arr.findIndex(r => r.id === id);
+    if (idx !== -1) arr.splice(idx, 1);
+    _onRealtimeUpdate(table, 'hapus');
+  }
+}
+
+function _onRealtimeUpdate(table, action) {
+  updateDashboard();
+  if (table === 'catering') renderCateringTable();
+  if (table === 'spp')      renderSppTable();
+  invalidateCache();
+  _showRealtimePulse(table, action);
+}
+
+function _updateRealtimeIndicator(connected) {
+  const el = document.getElementById('realtime-indicator');
+  if (!el) return;
+  el.innerHTML = connected
+    ? `<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#22c55e;background:rgba(34,197,94,0.12);padding:3px 8px;border-radius:20px">
+        <span style="width:6px;height:6px;border-radius:50%;background:#22c55e;animation:rtPulse 2s infinite"></span>Live
+       </span>`
+    : `<span style="display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;color:#9ca3af;background:rgba(156,163,175,0.12);padding:3px 8px;border-radius:20px">
+        <span style="width:6px;height:6px;border-radius:50%;background:#9ca3af"></span>Offline
+       </span>`;
+}
+
+function _showRealtimePulse(table, action) {
+  const emoji = { tambah:'➕', update:'✏️', hapus:'🗑️' };
+  const label = table === 'catering' ? 'Catering' : 'SPP';
+  const el = document.getElementById('realtime-indicator');
+  if (el) { el.style.transform = 'scale(1.15)'; setTimeout(() => { el.style.transform = ''; }, 300); }
+  showToast(`${emoji[action]||'🔄'} ${label} diperbarui admin lain`, '');
+}
+
+function startRealtime() {
+  if (_realtimeChannel) stopRealtime();
+  _realtimeChannel = sb
+    .channel('df-sync', { config: { broadcast: { self: false } } })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'catering' }, (payload) => {
+      if (!state.loggedIn) return;
+      _applyRealtimeChange('catering', payload.eventType, payload.new, payload.old);
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'spp' }, (payload) => {
+      if (!state.loggedIn) return;
+      _applyRealtimeChange('spp', payload.eventType, payload.new, payload.old);
+    })
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        _updateRealtimeIndicator(true);
+      } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+        _updateRealtimeIndicator(false);
+        clearTimeout(_realtimePingTimer);
+        _realtimePingTimer = setTimeout(() => {
+          if (state.loggedIn) startRealtime();
+        }, 5000);
+      }
+    });
+}
+
+function stopRealtime() {
+  clearTimeout(_realtimePingTimer);
+  if (_realtimeChannel) { sb.removeChannel(_realtimeChannel); _realtimeChannel = null; }
+  _updateRealtimeIndicator(false);
+}
+
+
+// ==========================================
+// REALTIME SYNC — Supabase Broadcast
+// Gratis di semua tier Supabase (tanpa postgres_changes).
+// Cara kerja:
+//   Admin A simpan/edit/hapus data
+//   → broadcast event ke channel 'df-room'
+//   → Admin B terima event, fetch ulang row itu,
+//     update state lokal, re-render tabel.
+// Tidak ada polling — murni event-driven via WebSocket.
+// ==========================================
+
+let _rtChannel       = null;
+let _rtConnected     = false;
+let _rtReconnectTimer = null;
+
+// --- Mulai subscribe Broadcast channel ---
+function startRealtime() {
+  if (_rtChannel) stopRealtime();
+
+  _rtChannel = sb.channel('df-room', {
+    config: { broadcast: { self: false } } // tidak terima event dari diri sendiri
+  });
+
+  _rtChannel
+    .on('broadcast', { event: 'data_change' }, ({ payload }) => {
+      if (!state.loggedIn) return;
+      _handleBroadcast(payload);
+    })
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') {
+        _rtConnected = true;
+        _setRealtimeIndicator(true);
+      } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+        _rtConnected = false;
+        _setRealtimeIndicator(false);
+        // Auto-reconnect 5 detik
+        clearTimeout(_rtReconnectTimer);
+        _rtReconnectTimer = setTimeout(() => {
+          if (state.loggedIn) startRealtime();
+        }, 5000);
+      }
+    });
+}
+
+// --- Stop & bersihkan channel ---
+function stopRealtime() {
+  clearTimeout(_rtReconnectTimer);
+  if (_rtChannel) {
+    sb.removeChannel(_rtChannel);
+    _rtChannel = null;
+  }
+  _rtConnected = false;
+  _setRealtimeIndicator(false);
+}
+
+// --- Broadcast ke semua admin lain saat kita simpan/hapus data ---
+// Dipanggil dari sbSaveCatering, sbSaveSpp, sbDeleteCatering, sbDeleteSpp
+async function broadcastChange(table, action, rowId) {
+  if (!_rtChannel || !_rtConnected) return;
+  try {
+    await _rtChannel.send({
+      type: 'broadcast',
+      event: 'data_change',
+      payload: {
+        table,      // 'catering' | 'spp'
+        action,     // 'upsert' | 'delete'
+        rowId,      // id row yang berubah
+        by: state.user?.username || '?',
+        ts: Date.now()
+      }
+    });
+  } catch(e) {
+    console.warn('[RT] Broadcast gagal:', e.message);
+  }
+}
+
+// --- Handle broadcast yang diterima dari admin lain ---
+async function _handleBroadcast({ table, action, rowId, by }) {
+  if (!rowId) return;
+
+  if (action === 'delete') {
+    // Hapus langsung dari state lokal
+    if (table === 'catering') {
+      state.cateringData = state.cateringData.filter(r => r.id !== rowId);
+    } else {
+      state.sppData = state.sppData.filter(r => r.id !== rowId);
+    }
+    _onRtUpdate(table, 'hapus', by);
+    return;
+  }
+
+  // upsert — fetch row terbaru dari Supabase
+  try {
+    const { data, error } = await sb
+      .from(table)
+      .select('*')
+      .eq('id', rowId)
+      .maybeSingle();
+
+    if (error || !data) return;
+
+    if (table === 'catering') {
+      const parsed = _rowToCatering(data);
+      const idx = state.cateringData.findIndex(r => r.id === rowId);
+      if (idx !== -1) state.cateringData[idx] = parsed;
+      else state.cateringData.push(parsed);
+    } else {
+      const parsed = _rowToSpp(data);
+      const idx = state.sppData.findIndex(r => r.id === rowId);
+      if (idx !== -1) state.sppData[idx] = parsed;
+      else state.sppData.push(parsed);
+    }
+    _onRtUpdate(table, 'update', by);
+  } catch(e) {
+    console.warn('[RT] Fetch row gagal:', e.message);
+  }
+}
+
+// --- Re-render setelah state update ---
+function _onRtUpdate(table, action, by) {
+  updateDashboard();
+  if (table === 'catering') renderCateringTable();
+  else renderSppTable();
+  invalidateCache();
+
+  const emoji = { update: '✏️', hapus: '🗑️' };
+  const label = table === 'catering' ? 'Catering' : 'SPP';
+  showToast(`${emoji[action]||'🔄'} ${label} diupdate oleh @${by}`, '');
+
+  // Animasi pulse kecil di indikator
+  const el = document.getElementById('rt-indicator');
+  if (el) { el.style.transform = 'scale(1.2)'; setTimeout(() => el.style.transform = '', 250); }
+}
+
+// --- Indikator Live/Offline di header ---
+function _setRealtimeIndicator(connected) {
+  const el = document.getElementById('rt-indicator');
+  if (!el) return;
+  if (connected) {
+    el.innerHTML = `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#22c55e;background:rgba(34,197,94,0.12);padding:3px 8px;border-radius:20px;transition:transform .2s">
+      <span style="width:6px;height:6px;border-radius:50%;background:#22c55e;animation:rtDot 2s ease-in-out infinite"></span>Live
+    </span>`;
+  } else {
+    el.innerHTML = `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:#9ca3af;background:rgba(156,163,175,0.1);padding:3px 8px;border-radius:20px">
+      <span style="width:6px;height:6px;border-radius:50%;background:#9ca3af"></span>Offline
+    </span>`;
+  }
+}
+
+
 
 
 // ==========================================
@@ -2799,6 +3052,7 @@ function enterApp() {
   loadAllData(true);
   resetAutoLogout();
   refreshUserRole();
+  startRealtime();
 }
 
 function confirmLogout() {
@@ -2816,6 +3070,7 @@ function confirmLogout() {
 function doLogout() {
   clearTimeout(autoLogoutTimer);
   closeConfirm();
+  stopRealtime();
   sb.auth.signOut(); // sign out dari Supabase Auth
   state.loggedIn = false;
   state.user     = null;
