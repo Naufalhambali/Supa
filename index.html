@@ -1966,7 +1966,7 @@ window.addEventListener('popstate', e => {
   area.style.transition = 'opacity 0.15s ease, transform 0.15s ease';
   setTimeout(() => {
     switch (page) {
-      case 'dashboard': area.innerHTML = buildDashboard(); animateCount(); drawDonut(); drawChart(); break;
+      case 'dashboard': area.innerHTML = buildDashboard(); animateCount(); drawDonut(); break;
       case 'santri':    area.innerHTML = buildSantriPage(); bindSantriEvents(); break;
       case 'spp':       area.innerHTML = buildSPPPage(); bindSPPEvents(); break;
       case 'catering':  area.innerHTML = buildCateringPage(); bindCateringEvents(); break;
@@ -2002,7 +2002,7 @@ function renderPage(page, skeleton = false) {
 
   setTimeout(() => {
     switch (page) {
-      case 'dashboard': area.innerHTML = buildDashboard(); animateCount(); drawDonut(); drawChart(); break;
+      case 'dashboard': area.innerHTML = buildDashboard(); animateCount(); drawDonut(); break;
       case 'santri':    area.innerHTML = buildSantriPage(); bindSantriEvents(); break;
       case 'spp':       area.innerHTML = buildSPPPage(); bindSPPEvents(); break;
       case 'catering':  area.innerHTML = buildCateringPage(); bindCateringEvents(); break;
@@ -2194,23 +2194,6 @@ function buildDashboard() {
     </div>
   </div>
 
-  <!-- CHART -->
-  <div class="dash-section">
-    <div class="chart-card">
-      <div class="chart-title">Grafik Pendapatan 5 Bulan Terakhir</div>
-      <div class="chart-area">
-        <canvas id="income-chart" style="width:100%;height:100%;"></canvas>
-      </div>
-      <div class="chart-legend">
-        <div class="legend-label"><div class="legend-dot" style="background:#00b894;"></div> SPP</div>
-        <div class="legend-label"><div class="legend-dot" style="background:#00cec9;"></div> Catering</div>
-      </div>
-      <script>
-        window.__chartData = ${JSON.stringify(chartData)};
-      <\/script>
-    </div>
-  </div>
-
   <!-- AKTIVITAS TERBARU -->
   <div class="dash-section">
     <div class="activity-card">
@@ -2264,93 +2247,6 @@ function drawDonut() {
 }
 
 // ─── DRAW BAR CHART ────────────────────────────────
-function drawChart() {
-  const data = window.__chartData;
-  if (!data) return;
-  const canvas = document.getElementById('income-chart');
-  if (!canvas) return;
-  canvas.width = canvas.offsetWidth * 2;
-  canvas.height = canvas.offsetHeight * 2;
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
-  const padL = 16, padR = 16, padT = 20, padB = 36;
-  const plotW = W - padL - padR;
-  const plotH = H - padT - padB;
-  const n = data.length;
-  const maxVal = Math.max(...data.map(d => d.spp + d.cat), 1);
-  const barGroup = plotW / n;
-  const barW = barGroup * 0.28;
-  const gap = barGroup * 0.06;
-
-  ctx.scale(1, 1);
-
-  // Y axis labels
-  ctx.fillStyle = '#90a4ae';
-  ctx.font = '20px Poppins, sans-serif';
-  ctx.textAlign = 'right';
-  for (let i=0; i<=4; i++) {
-    const y = padT + plotH - (plotH * i / 4);
-    const val = maxVal * i / 4;
-    ctx.fillText(fmt(val), padL + 10, y + 7);
-    ctx.strokeStyle = '#e8edf2';
-    ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(padL + 16, y); ctx.lineTo(W - padR, y); ctx.stroke();
-  }
-
-  // Bars with animation
-  let progress = 0;
-  const animate = () => {
-    ctx.clearRect(0, 0, W, H);
-    // grid lines
-    ctx.strokeStyle = '#e8edf2'; ctx.lineWidth = 1;
-    for (let i=0; i<=4; i++) {
-      const y = padT + plotH - (plotH * i / 4);
-      ctx.fillStyle = '#90a4ae'; ctx.font = '20px Poppins,sans-serif'; ctx.textAlign = 'right';
-      ctx.fillText(fmt(maxVal * i / 4), padL + 60, y + 7);
-      ctx.beginPath(); ctx.moveTo(padL + 68, y); ctx.lineTo(W - padR, y); ctx.stroke();
-    }
-    data.forEach((d, i) => {
-      const x = padL + 70 + i * barGroup + gap;
-      const sppH = (d.spp / maxVal) * plotH * progress;
-      const catH = (d.cat / maxVal) * plotH * progress;
-
-      // SPP bar
-      const g1 = ctx.createLinearGradient(0, padT + plotH - sppH, 0, padT + plotH);
-      g1.addColorStop(0, '#00c9a7'); g1.addColorStop(1, '#00897b');
-      ctx.fillStyle = g1;
-      roundRect(ctx, x, padT + plotH - sppH, barW, sppH, 4);
-      ctx.fill();
-
-      // Catering bar
-      const g2 = ctx.createLinearGradient(0, padT + plotH - catH, 0, padT + plotH);
-      g2.addColorStop(0, '#81ecec'); g2.addColorStop(1, '#00cec9');
-      ctx.fillStyle = g2;
-      roundRect(ctx, x + barW + gap * 2, padT + plotH - catH, barW, catH, 4);
-      ctx.fill();
-
-      // Month label
-      ctx.fillStyle = '#546e7a'; ctx.font = '22px Poppins,sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText(d.label, x + barW + gap, H - 10);
-    });
-    if (progress < 1) { progress = Math.min(progress + 0.06, 1); requestAnimationFrame(animate); }
-  };
-  requestAnimationFrame(animate);
-}
-
-function roundRect(ctx, x, y, w, h, r) {
-  if (h < r * 2) r = h / 2;
-  if (h <= 0) return;
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w - r, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-  ctx.lineTo(x + w, y + h);
-  ctx.lineTo(x, y + h);
-  ctx.lineTo(x, y + r);
-  ctx.quadraticCurveTo(x, y, x + r, y);
-  ctx.closePath();
-}
-
 function timeAgo(ts) {
   if (!ts) return '';
   const diff = (Date.now() - new Date(ts)) / 1000;
@@ -4084,7 +3980,9 @@ async function doSinkronSPPAuto() {
 // ─── SETTING PAGE ─────────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════
 
-// State inline-edit untuk setting
+// State tab setting aktif — persistent saat re-render
+let activeSettingTab = 'profil';
+
 let settingEditState = {
   tarifSpp: false, tarifCat: false, tahunAjaran: false
 };
@@ -4692,6 +4590,7 @@ function bindSettingEvents() {
       document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       const tab = btn.dataset.stab;
+      activeSettingTab = tab; // simpan tab aktif
       document.getElementById('panel-profil').style.display   = tab==='profil'   ? '' : 'none';
       const pp = document.getElementById('panel-pengguna');
       if (pp) pp.style.display = tab==='pengguna' ? '' : 'none';
@@ -4779,7 +4678,7 @@ function bindSettingEvents() {
       settingEditState[btn.dataset.edit] = true;
       renderPage('setting');
       setTimeout(() => {
-        document.querySelectorAll('.stab').forEach(b => { if (b.dataset.stab==='sistem') b.click(); });
+        activeSettingTab = 'sistem';
         const el = document.getElementById(`input-${btn.dataset.edit}`);
         if (el) { el.focus(); el.select(); }
       }, 50);
@@ -4791,7 +4690,7 @@ function bindSettingEvents() {
     btn.addEventListener('click', () => {
       settingEditState[btn.dataset.state] = false;
       renderPage('setting');
-      setTimeout(() => document.querySelectorAll('.stab').forEach(b => { if (b.dataset.stab==='sistem') b.click(); }), 30);
+      activeSettingTab = 'sistem';
     });
   });
 
@@ -4819,7 +4718,7 @@ function bindSettingEvents() {
       settingEditState[stateKey] = false;
       toast('Berhasil disimpan!');
       renderPage('setting');
-      setTimeout(() => document.querySelectorAll('.stab').forEach(b => { if (b.dataset.stab==='sistem') b.click(); }), 30);
+      activeSettingTab = 'sistem';
     });
   });
 
@@ -6228,7 +6127,13 @@ function exportTunggakanPDF() {
 // Tingkat order: Awwaliyah → Wustho → Ulya
 // ─── Body scroll lock helpers ─────────────────────────
 function lockBody()   { document.body.classList.add('modal-open'); }
-function unlockBody() { document.body.classList.remove('modal-open'); }
+function unlockBody() { document.body.classList.remove('modal-open');   // ── Restore tab aktif setelah re-render ──
+  // Dipanggil di akhir agar semua listener sudah terpasang
+  if (activeSettingTab && activeSettingTab !== 'profil') {
+    const tabBtn = document.querySelector(`.stab[data-stab="${activeSettingTab}"]`);
+    if (tabBtn) tabBtn.click();
+  }
+}
 
 // ─── Photo Viewer Modal ────────────────────────────────
 function openPhotoViewer(avatarUrl, nama, role, canChange) {
@@ -6387,7 +6292,7 @@ function openUserEditModal(usr) {
     const { data: allP } = await sb.from('profiles').select('*').order('nama');
     appData.allProfiles = allP || [];
     renderPage('setting');
-    setTimeout(() => document.querySelectorAll('.stab').forEach(b => { if (b.dataset.stab==='pengguna') b.click(); }), 30);
+    activeSettingTab = 'pengguna';
   });
 }
 
@@ -6416,7 +6321,7 @@ function openUserDelConfirm(uid, nama) {
     appData.allProfiles = appData.allProfiles.filter(u => u.id !== uid);
     toast('Profil pengguna berhasil dihapus!');
     renderPage('setting');
-    setTimeout(() => document.querySelectorAll('.stab').forEach(b => { if (b.dataset.stab==='pengguna') b.click(); }), 30);
+    activeSettingTab = 'pengguna';
   });
 }
 
@@ -6439,13 +6344,8 @@ async function saveTag(type) {
   appData.setting = { ...appData.setting, [dbCol]: current };
   if (inp) inp.value = '';
   toast(`${type === 'kelas' ? 'Kelas' : 'Kamar'} "${val}" berhasil ditambahkan!`);
+  activeSettingTab = 'sistem';
   renderPage('setting');
-  // Tetap di tab sistem
-  setTimeout(() => {
-    document.querySelectorAll('.stab').forEach(b => {
-      if (b.dataset.stab === 'sistem') b.click();
-    });
-  }, 30);
 }
 
 // ─── Hapus tag (kelas/kamar) ───────────────────────────
@@ -6462,12 +6362,8 @@ async function deleteTag(type, idx) {
     if (error) { toast('Gagal: ' + error.message, 'error'); return; }
     appData.setting = { ...appData.setting, [dbCol]: current };
     toast(`"${nama}" dihapus dari daftar ${type}`);
+    activeSettingTab = 'sistem';
     renderPage('setting');
-    setTimeout(() => {
-      document.querySelectorAll('.stab').forEach(b => {
-        if (b.dataset.stab === 'sistem') b.click();
-      });
-    }, 30);
   });
 }
 
