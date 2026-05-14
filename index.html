@@ -1519,8 +1519,11 @@ body.modal-open { overflow: hidden; touch-action: none; }
 
     <div class="login-logo-wrap">
       <div class="login-logo-circle">
-        <!-- Mosque icon -->
-        <svg viewBox="0 0 36 36" fill="none">
+        <img src="assets/logo.png" alt="Logo Darul Falah"
+          style="width:64px;height:64px;object-fit:contain;border-radius:50%;"
+          onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
+        <!-- Fallback SVG jika file tidak ditemukan -->
+        <svg viewBox="0 0 36 36" fill="none" style="display:none;">
           <path d="M18 4C15.5 4 13.5 5.5 13.5 7.5C13.5 9 14.5 10.3 16 10.8V13H12C10.9 13 10 13.9 10 15V28H26V15C26 13.9 25.1 13 24 13H20V10.8C21.5 10.3 22.5 9 22.5 7.5C22.5 5.5 20.5 4 18 4Z" fill="white" opacity="0.9"/>
           <path d="M8 28V18C8 16.9 8.9 16 10 16H10.5V28H8Z" fill="white" opacity="0.7"/>
           <path d="M28 28V18C28 16.9 27.1 16 26 16H25.5V28H28Z" fill="white" opacity="0.7"/>
@@ -1931,7 +1934,8 @@ document.getElementById('header-menu-btn').addEventListener('click', e => {
 });
 document.addEventListener('click', () => document.getElementById('header-dropdown')?.classList.add('hidden'));
 document.getElementById('hdd-logout')?.addEventListener('click', doLogout);
-document.getElementById('hdd-refresh')?.addEventListener('click', async () => {
+document.getElementById('hdd-refresh')?.addEventListener('click', async (e) => {
+  e.stopPropagation();
   document.getElementById('header-dropdown').classList.add('hidden');
   toast('Memperbarui data...', 'info');
   await loadAll();
@@ -2364,7 +2368,7 @@ function timeAgo(ts) {
 let santriState = {
   search: '',
   filterGender: 'all',
-  filterStatus: 'aktif',
+  filterStatus: 'all',
   filterTahunMasuk: 'all',
   page: 1,
   perPage: 20,
@@ -2385,6 +2389,16 @@ function getSantriFiltered() {
   if (santriState.filterGender !== 'all') list = list.filter(s => s.gender === santriState.filterGender);
   if (santriState.filterStatus !== 'all') list = list.filter(s => s.status_santri === santriState.filterStatus);
   if (santriState.filterTahunMasuk !== 'all') list = list.filter(s => String(s.tahun_masuk) === santriState.filterTahunMasuk);
+
+  // Sort: aktif dulu, alumni & berhenti paling bawah
+  const statusOrder = { 'aktif': 0, 'alumni': 1, 'berhenti': 2 };
+  list.sort((a, b) => {
+    const sa = statusOrder[a.status_santri] ?? 0;
+    const sb = statusOrder[b.status_santri] ?? 0;
+    if (sa !== sb) return sa - sb;
+    return (a.nama || '').localeCompare(b.nama || '', 'id');
+  });
+
   return list;
 }
 
@@ -2393,7 +2407,7 @@ function buildSantriPage() {
   const totalPages = Math.max(1, Math.ceil(filtered.length / santriState.perPage));
   const p = Math.min(santriState.page, totalPages);
   const paged = filtered.slice((p - 1) * santriState.perPage, p * santriState.perPage);
-  const hasFilter = santriState.filterGender !== 'all' || santriState.filterStatus !== 'aktif' || santriState.filterTahunMasuk !== 'all';
+  const hasFilter = santriState.filterGender !== 'all' || santriState.filterStatus !== 'all' || santriState.filterTahunMasuk !== 'all';
 
   // Ambil daftar tahun masuk unik untuk filter
   const tahunList = [...new Set(
@@ -2686,13 +2700,28 @@ function updateSantriTbody() {
     return;
   }
 
+  let lastStatus = null;
   tbody.innerHTML = paged.map((s, idx) => {
-    const no = (p - 1) * santriState.perPage + idx + 1;
+    const no  = (p - 1) * santriState.perPage + idx + 1;
     const tgl = s.tanggal_lahir ? new Date(s.tanggal_lahir).toLocaleDateString('id-ID',{day:'2-digit',month:'short',year:'numeric'}) : '-';
-    return `
-    <tr>
+    const st  = s.status_santri || 'aktif';
+
+    // Separator jika status berubah (aktif → alumni/berhenti)
+    let separator = '';
+    if (st !== 'aktif' && lastStatus === 'aktif') {
+      separator = `<tr><td colspan="12" style="padding:4px 10px;background:#f5f5f5;border-top:2px solid #ddd;font-size:10px;font-weight:700;color:#888;text-align:center;letter-spacing:0.5px;">─── Alumni & Berhenti ───</td></tr>`;
+    }
+    lastStatus = st;
+
+    const rowStyle = st !== 'aktif' ? 'opacity:0.65;' : '';
+    const statusBadge = st !== 'aktif'
+      ? `<span style="display:inline-block;margin-left:4px;font-size:9px;padding:1px 5px;border-radius:8px;font-weight:700;background:${st==='alumni'?'#e3f2fd':'#fff3e0'};color:${st==='alumni'?'#1565c0':'#e65100'};">${st==='alumni'?'Alumni':'Berhenti'}</span>`
+      : '';
+
+    return separator + `
+    <tr style="${rowStyle}">
       <td class="tbl-no">${no}</td>
-      <td><span class="tbl-nama tbl-nama-link" data-id="${s.id}" style="cursor:pointer;color:var(--teal-2);white-space:nowrap;">${s.nama}</span></td>
+      <td><span class="tbl-nama tbl-nama-link" data-id="${s.id}" style="cursor:pointer;color:var(--teal-2);white-space:nowrap;">${s.nama}</span>${statusBadge}</td>
       <td style="font-size:12px;color:var(--text-mid);white-space:nowrap;">${s.bin_binti||'-'}</td>
       <td>${s.kelas?`<span style="background:var(--teal-xlight);color:var(--teal-2);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;">${s.kelas}</span>`:`<span style="color:var(--text-light);font-size:11px;">-</span>`}</td>
       <td><span style="font-size:12px;display:block;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${s.alamat||''}">${s.alamat||'-'}</span></td>
@@ -4249,7 +4278,7 @@ function buildSettingPage() {
       </div>
     </div>
 
-    <!-- Edit Profil Form: disembunyikan untuk Super Admin (edit via tab Pengguna) -->
+    <!-- Edit Profil Form: hanya untuk non-Super Admin -->
     ${!isSuperAdmin() ? `
     <div class="setting-section">
       <div class="setting-section-head accordion open" data-acc="edit-profil">
@@ -4277,15 +4306,7 @@ function buildSettingPage() {
           Simpan Profil
         </button>
       </div>
-    </div>` : `
-    <div class="setting-section" style="background:var(--teal-xlight);border:1.5px dashed var(--teal-1);">
-      <div class="setting-section-body always" style="padding:14px 16px;">
-        <div style="display:flex;align-items:center;gap:10px;color:var(--teal-2);">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          <span style="font-size:13px;font-weight:600;">Edit profil tersedia di tab <strong>Pengguna</strong></span>
-        </div>
-      </div>
-    </div>`}
+    </div>` : ''}
 
     <!-- Ganti Password -->
     <div class="setting-section">
@@ -4508,6 +4529,10 @@ function buildSettingPage() {
           <button class="btn-kk-action status" id="btn-kk-ubah-ta" disabled style="background:#e8f5e9;color:#2e7d32;">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             Ubah Tahun Ajaran
+          </button>
+          <button class="btn-kk-action status" id="btn-kk-aktif" disabled style="background:#e8f5e9;color:#2e7d32;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            Aktifkan
           </button>
           <button class="btn-kk-action status" id="btn-kk-alumni" disabled>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
@@ -4950,6 +4975,7 @@ function bindSettingEvents() {
   });
 
   document.getElementById('btn-kk-naik')?.addEventListener('click', () => doKenaikanKelas());
+  document.getElementById('btn-kk-aktif')?.addEventListener('click', () => doUpdateStatus('aktif'));
   document.getElementById('btn-kk-alumni')?.addEventListener('click', () => doUpdateStatus('alumni'));
   document.getElementById('btn-kk-berhenti')?.addEventListener('click', () => doUpdateStatus('berhenti'));
   document.getElementById('btn-kk-hapus')?.addEventListener('click', () => doHapusSantri());
@@ -5217,7 +5243,7 @@ function updateKKActionBar() {
     const total = getKKData().length;
     el.textContent = n === total && n > 0 ? `Semua ${n} dipilih` : `${n} dipilih`;
   }
-  ['btn-kk-naik','btn-kk-ubah-ta','btn-kk-alumni','btn-kk-berhenti','btn-kk-hapus'].forEach(id => {
+  ['btn-kk-naik','btn-kk-ubah-ta','btn-kk-aktif','btn-kk-alumni','btn-kk-berhenti','btn-kk-hapus'].forEach(id => {
     const btn = document.getElementById(id);
     if (btn) btn.disabled = n === 0;
   });
@@ -5356,7 +5382,7 @@ async function doKenaikanKelas() {
 async function doUpdateStatus(status) {
   if (!kkSelected.size) return;
   const ids   = [...kkSelected];
-  const label = status === 'alumni' ? 'Alumni' : 'Berhenti';
+  const label = status === 'alumni' ? 'Alumni' : status === 'aktif' ? 'Aktif' : 'Berhenti';
   const names = appData.santri.filter(s => ids.includes(s.id)).map(s => s.nama).slice(0,3).join(', ');
   const more  = ids.length > 3 ? ` +${ids.length-3} lainnya` : '';
 
@@ -5589,69 +5615,83 @@ function exportLapBulananPDF() {
 
   const html = `<!DOCTYPE html><html><head>
   <meta charset="UTF-8"/>
-  <title>Laporan Bulanan ${r.label} — ${ta}</title>
+  <title>Laporan Bulanan ${r.label} ${r.tahun}</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:Arial,sans-serif;font-size:11px;color:#222;padding:16px;}
-    .header{text-align:center;margin-bottom:16px;border-bottom:2px solid #00897b;padding-bottom:10px;}
-    .header h2{font-size:15px;color:#00897b;margin-bottom:3px;}
-    .header p{font-size:10px;color:#666;}
-    .summary{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
-    .stat{flex:1;min-width:120px;border:1px solid #ddd;border-radius:6px;padding:8px 10px;}
-    .stat-val{font-size:13px;font-weight:800;}
-    .stat-lbl{font-size:9px;color:#888;margin-top:2px;}
-    .stat.green .stat-val{color:#00897b;}
-    .stat.red .stat-val{color:#e74c3c;}
-    table{width:100%;border-collapse:collapse;margin-top:8px;}
-    th{background:#00897b;color:white;padding:7px 10px;text-align:left;font-size:10px;}
-    th.num,td.num{text-align:right;}
-    td{padding:8px 10px;border-bottom:1px solid #eee;font-size:11px;}
-    .info-row td{font-size:9px;color:#888;background:#fafafa;}
-    .footer{margin-top:14px;font-size:9px;color:#aaa;text-align:right;border-top:1px solid #eee;padding-top:6px;}
-    @media print{body{padding:6px;}@page{margin:10mm;size:A4;}}
+    body{font-family:'Arial',sans-serif;font-size:11px;color:#1a1a1a;background:white;padding:20px 24px;}
+    .kop{display:flex;align-items:center;gap:16px;border-bottom:3px solid #00897b;padding-bottom:12px;margin-bottom:16px;}
+    .kop-logo{width:52px;height:52px;background:#00897b;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;font-size:20px;font-weight:900;}
+    .kop-text h1{font-size:14px;font-weight:900;color:#00897b;margin-bottom:2px;}
+    .kop-text p{font-size:9px;color:#555;}
+    .judul{text-align:center;margin-bottom:14px;}
+    .judul h2{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;border:1px solid #ccc;display:inline-block;padding:4px 16px;border-radius:4px;}
+    .judul p{font-size:10px;color:#666;margin-top:4px;}
+    .summary-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:14px;}
+    .stat-box{border:1px solid #ddd;border-radius:6px;padding:8px 10px;border-left:3px solid #00897b;}
+    .stat-box.red{border-left-color:#e74c3c;}
+    .stat-label{font-size:8px;color:#888;font-weight:700;text-transform:uppercase;margin-bottom:3px;}
+    .stat-value{font-size:12px;font-weight:800;color:#00897b;}
+    .stat-box.red .stat-value{color:#e74c3c;}
+    table{width:100%;border-collapse:collapse;margin-bottom:10px;}
+    th{background:#00897b;color:white;padding:7px 10px;font-size:10px;font-weight:700;text-align:left;white-space:nowrap;}
+    th.r,td.r{text-align:right;}
+    td{padding:7px 10px;border-bottom:1px solid #f0f0f0;font-size:10px;vertical-align:top;}
+    tr:nth-child(even) td{background:#f9f9f9;}
+    .info-row td{background:#f5fdf9;font-size:9px;color:#555;font-style:italic;}
+    .footer{margin-top:12px;padding-top:8px;border-top:1px solid #ddd;display:flex;justify-content:space-between;font-size:8px;color:#aaa;}
+    @media print{body{padding:10px 14px;}@page{margin:8mm;size:A4;}}
   </style>
 </head><body>
-  <div class="header">
-    <h2>Laporan Keuangan Bulanan — ${r.label} ${r.tahun}</h2>
-    <p>Pondok Pesantren Darul Falah Gambut &nbsp;|&nbsp; Tahun Ajaran: <strong>${ta}</strong> &nbsp;|&nbsp; Dicetak: ${tgl}</p>
+  <div class="kop">
+    <div class="kop-logo">DF</div>
+    <div class="kop-text">
+      <h1>Pondok Pesantren Darul Falah Gambut</h1>
+      <p>Gambut, Kabupaten Banjar, Kalimantan Selatan</p>
+    </div>
   </div>
-  <div class="summary">
-    <div class="stat green"><div class="stat-val">${idr(r.pemasukanSpp)}</div><div class="stat-lbl">Pemasukan SPP</div></div>
-    <div class="stat red"><div class="stat-val">${idr(r.belumSpp)}</div><div class="stat-lbl">SPP Belum Masuk</div></div>
-    <div class="stat green"><div class="stat-val">${idr(r.pemasukanCat)}</div><div class="stat-lbl">Pemasukan Catering</div></div>
-    <div class="stat red"><div class="stat-val">${idr(r.belumCat)}</div><div class="stat-lbl">Catering Belum Masuk</div></div>
+  <div class="judul">
+    <h2>Laporan Keuangan Bulanan</h2>
+    <p>${r.label} ${r.tahun} &nbsp;|&nbsp; Tahun Ajaran ${ta}</p>
+  </div>
+  <div class="summary-grid">
+    <div class="stat-box"><div class="stat-label">Pemasukan SPP</div><div class="stat-value">${idr(r.pemasukanSpp)}</div></div>
+    <div class="stat-box red"><div class="stat-label">SPP Belum Masuk</div><div class="stat-value">${idr(r.belumSpp)}</div></div>
+    <div class="stat-box"><div class="stat-label">Pemasukan Catering</div><div class="stat-value">${idr(r.pemasukanCat)}</div></div>
+    <div class="stat-box red"><div class="stat-label">Catering Belum Masuk</div><div class="stat-value">${idr(r.belumCat)}</div></div>
   </div>
   <table>
     <thead><tr>
       <th>Tanggal</th><th>Bulan</th>
-      <th class="num">Pemasukan SPP</th><th class="num">SPP Belum Masuk</th>
-      <th class="num">Pemasukan Catering</th><th class="num">Catering Belum Masuk</th>
-      <th class="num">Total Pemasukan</th><th class="num">Total Belum Masuk</th>
+      <th class="r">Pemasukan SPP</th><th class="r">SPP Belum Masuk</th>
+      <th class="r">Pemasukan Catering</th><th class="r">Catering Belum Masuk</th>
+      <th class="r">Total Pemasukan</th><th class="r">Total Belum Masuk</th>
     </tr></thead>
     <tbody>
       <tr>
-        <td>${r.tgl}</td><td><strong>${r.label}</strong></td>
-        <td class="num" style="color:#00897b;font-weight:700;">${idr(r.pemasukanSpp)}</td>
-        <td class="num" style="color:#e74c3c;">${idr(r.belumSpp)}</td>
-        <td class="num" style="color:#00897b;font-weight:700;">${idr(r.pemasukanCat)}</td>
-        <td class="num" style="color:#e74c3c;">${idr(r.belumCat)}</td>
-        <td class="num" style="color:#00897b;font-weight:800;">${idr(r.totalPemasukan)}</td>
-        <td class="num" style="color:#e74c3c;font-weight:800;">${idr(r.totalBelum)}</td>
+        <td>${r.tgl}</td><td><strong>${r.label} ${r.tahun}</strong></td>
+        <td class="r" style="color:#00897b;font-weight:700;">${idr(r.pemasukanSpp)}</td>
+        <td class="r" style="color:#e74c3c;">${idr(r.belumSpp)}</td>
+        <td class="r" style="color:#00897b;font-weight:700;">${idr(r.pemasukanCat)}</td>
+        <td class="r" style="color:#e74c3c;">${idr(r.belumCat)}</td>
+        <td class="r" style="color:#00897b;font-weight:800;">${idr(r.totalPemasukan)}</td>
+        <td class="r" style="color:#e74c3c;font-weight:800;">${idr(r.totalBelum)}</td>
       </tr>
       <tr class="info-row">
-        <td colspan="2">Santri SPP: ${r.totalSantriSpp} | Lunas: ${r.sppLunas} | Belum: ${r.sppBelum} | Tarif: ${idr(s.tarif_spp||0)}</td>
+        <td colspan="2">SPP: ${r.totalSantriSpp} santri terdaftar, ${r.sppLunas} lunas, ${r.sppBelum} belum (tarif ${idr(s.tarif_spp||0)}/santri)</td>
         <td colspan="3"></td>
-        <td colspan="3">Santri Catering: ${r.totalCat} | Lunas: ${r.catLunas} | Belum: ${r.catBelum} | Tarif: ${idr(s.tarif_catering||0)}</td>
+        <td colspan="3">Catering: ${r.totalCat} santri terdaftar, ${r.catLunas} lunas, ${r.catBelum} belum (tarif ${idr(s.tarif_catering||0)}/santri)</td>
       </tr>
     </tbody>
   </table>
-  <div class="footer">Sistem Administrasi Darul Falah Gambut &nbsp;•&nbsp; ${tgl}</div>
+  <div class="footer">
+    <span>Sistem Administrasi Darul Falah Gambut</span>
+    <span>Dicetak: ${tgl}</span>
+  </div>
 </body></html>`;
 
   const win = window.open('', '_blank');
   if (!win) { toast('Popup diblokir. Izinkan popup untuk export PDF.', 'error'); return; }
-  win.document.write(html);
-  win.document.close();
+  win.document.write(html); win.document.close();
   win.onload = () => { win.focus(); win.print(); };
 }
 
@@ -5669,16 +5709,21 @@ function exportLapTahunanPDF() {
   const totPemasukan    = totPemasukanSpp + totPemasukanCat;
   const totBelum        = totBelumSpp + totBelumCat;
 
-  const rows = allData.map(r => {
-    const rs = !r.isSudah ? 'color:#ccc;' : '';
-    return `<tr style="border-bottom:1px solid #eee;">
-      <td style="padding:6px 8px;font-weight:700;${rs}">${r.singkat} ${r.tahun}${r.isCurrent?' ★':''}</td>
-      <td style="padding:6px 8px;text-align:right;color:${r.isSudah?'#00897b':'#ccc'};font-weight:${r.isSudah?'700':'400'};">${r.isSudah?idr(r.pemasukanSpp):'-'}</td>
-      <td style="padding:6px 8px;text-align:right;color:${r.isSudah&&r.belumSpp>0?'#e74c3c':'#ccc'};">${r.isSudah?idr(r.belumSpp):'-'}</td>
-      <td style="padding:6px 8px;text-align:right;color:${r.isSudah?'#00897b':'#ccc'};font-weight:${r.isSudah?'700':'400'};">${r.isSudah?idr(r.pemasukanCat):'-'}</td>
-      <td style="padding:6px 8px;text-align:right;color:${r.isSudah&&r.belumCat>0?'#e74c3c':'#ccc'};">${r.isSudah?idr(r.belumCat):'-'}</td>
-      <td style="padding:6px 8px;text-align:right;color:${r.isSudah?'#00897b':'#ccc'};font-weight:800;">${r.isSudah?idr(r.totalPemasukan):'-'}</td>
-      <td style="padding:6px 8px;text-align:right;color:${r.isSudah&&r.totalBelum>0?'#e74c3c':'#ccc'};font-weight:800;">${r.isSudah?idr(r.totalBelum):'-'}</td>
+  const rows = allData.map((r, i) => {
+    const gray = !r.isSudah ? 'color:#bbb;' : '';
+    const v    = (val, clr) => r.isSudah ? `<td class="r" style="${clr}">${idr(val)}</td>` : `<td class="r" style="color:#bbb;">—</td>`;
+    return `<tr style="${i%2===1?'background:#f9f9f9;':''}${r.isCurrent?'background:#f0fdf8;':''}">
+      <td style="${gray}font-weight:${r.isSudah?'700':'400'};">
+        ${r.singkat} ${r.tahun}
+        ${r.isCurrent?'<span style="background:#00897b;color:white;font-size:8px;padding:1px 5px;border-radius:8px;margin-left:4px;">Berjalan</span>':''}
+        ${!r.isSudah?'<span style="color:#bbb;font-size:9px;"> (belum)</span>':''}
+      </td>
+      ${v(r.pemasukanSpp, 'color:#00897b;font-weight:700;')}
+      ${v(r.belumSpp,     r.belumSpp>0?'color:#e74c3c;':'')}
+      ${v(r.pemasukanCat, 'color:#00897b;font-weight:700;')}
+      ${v(r.belumCat,     r.belumCat>0?'color:#e74c3c;':'')}
+      ${v(r.totalPemasukan, 'color:#00897b;font-weight:800;')}
+      ${v(r.totalBelum,     r.totalBelum>0?'color:#e74c3c;font-weight:800;':'')}
     </tr>`;
   }).join('');
 
@@ -5687,64 +5732,77 @@ function exportLapTahunanPDF() {
   <title>Laporan Tahunan ${ta}</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:Arial,sans-serif;font-size:11px;color:#222;padding:16px;}
-    .header{text-align:center;margin-bottom:14px;border-bottom:2px solid #00897b;padding-bottom:10px;}
-    .header h2{font-size:15px;color:#00897b;margin-bottom:3px;}
-    .header p{font-size:10px;color:#666;}
-    .summary{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
-    .stat{flex:1;min-width:110px;border:1px solid #ddd;border-radius:5px;padding:7px 9px;}
-    .stat-val{font-size:12px;font-weight:800;}
-    .stat-lbl{font-size:9px;color:#888;}
-    .stat.green .stat-val{color:#00897b;}
-    .stat.red .stat-val{color:#e74c3c;}
+    body{font-family:'Arial',sans-serif;font-size:11px;color:#1a1a1a;background:white;padding:16px 20px;}
+    .kop{display:flex;align-items:center;gap:14px;border-bottom:3px solid #00897b;padding-bottom:10px;margin-bottom:14px;}
+    .kop-logo{width:48px;height:48px;background:#00897b;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;font-size:18px;font-weight:900;}
+    .kop-text h1{font-size:13px;font-weight:900;color:#00897b;margin-bottom:2px;}
+    .kop-text p{font-size:9px;color:#555;}
+    .judul{text-align:center;margin-bottom:12px;}
+    .judul h2{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;border:1px solid #ccc;display:inline-block;padding:4px 14px;border-radius:4px;}
+    .judul p{font-size:10px;color:#666;margin-top:3px;}
+    .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+    .stat-box{border:1px solid #e0e0e0;border-radius:5px;padding:7px 9px;border-left:3px solid #00897b;}
+    .stat-box.red{border-left-color:#e74c3c;}
+    .stat-label{font-size:8px;color:#888;font-weight:700;text-transform:uppercase;margin-bottom:2px;}
+    .stat-value{font-size:11px;font-weight:800;color:#00897b;}
+    .stat-box.red .stat-value{color:#e74c3c;}
     table{width:100%;border-collapse:collapse;}
-    th{background:#00897b;color:white;padding:6px 8px;text-align:left;font-size:10px;}
-    th.num{text-align:right;}
-    .total-row td{background:#e8f5e9;font-weight:800;color:#00897b;border-top:2px solid #00897b;padding:7px 8px;}
-    .footer{margin-top:12px;font-size:9px;color:#aaa;text-align:right;border-top:1px solid #eee;padding-top:6px;}
-    @media print{body{padding:6px;}@page{margin:10mm;size:A4 landscape;}}
+    th{background:#00897b;color:white;padding:6px 8px;font-size:9px;font-weight:700;text-align:left;white-space:nowrap;}
+    th.r,td.r{text-align:right;}
+    td{padding:6px 8px;border-bottom:1px solid #f0f0f0;font-size:10px;}
+    .total-row td{background:#e8f5e9;font-weight:800;color:#00897b;border-top:2px solid #00897b;font-size:10px;padding:7px 8px;}
+    .footer{margin-top:10px;padding-top:7px;border-top:1px dashed #ddd;display:flex;justify-content:space-between;font-size:8px;color:#aaa;}
+    @media print{body{padding:8px 12px;}@page{margin:8mm;size:A4 landscape;}}
   </style>
 </head><body>
-  <div class="header">
-    <h2>Laporan Keuangan Tahunan — Tahun Ajaran ${ta}</h2>
-    <p>Pondok Pesantren Darul Falah Gambut &nbsp;|&nbsp; Dicetak: ${tgl}</p>
+  <div class="kop">
+    <div class="kop-logo">DF</div>
+    <div class="kop-text">
+      <h1>Pondok Pesantren Darul Falah Gambut</h1>
+      <p>Gambut, Kabupaten Banjar, Kalimantan Selatan</p>
+    </div>
   </div>
-  <div class="summary">
-    <div class="stat green"><div class="stat-val">${idr(totPemasukan)}</div><div class="stat-lbl">Total Pemasukan (YTD)</div></div>
-    <div class="stat red"><div class="stat-val">${idr(totBelum)}</div><div class="stat-lbl">Total Belum Masuk</div></div>
-    <div class="stat green"><div class="stat-val">${idr(totPemasukanSpp)}</div><div class="stat-lbl">Total SPP Masuk</div></div>
-    <div class="stat green"><div class="stat-val">${idr(totPemasukanCat)}</div><div class="stat-lbl">Total Catering Masuk</div></div>
+  <div class="judul">
+    <h2>Laporan Keuangan Tahunan</h2>
+    <p>Tahun Ajaran ${ta}</p>
+  </div>
+  <div class="summary-grid">
+    <div class="stat-box"><div class="stat-label">Total Pemasukan (YTD)</div><div class="stat-value">${idr(totPemasukan)}</div></div>
+    <div class="stat-box red"><div class="stat-label">Total Belum Masuk</div><div class="stat-value">${idr(totBelum)}</div></div>
+    <div class="stat-box"><div class="stat-label">Total SPP Masuk</div><div class="stat-value">${idr(totPemasukanSpp)}</div></div>
+    <div class="stat-box"><div class="stat-label">Total Catering Masuk</div><div class="stat-value">${idr(totPemasukanCat)}</div></div>
   </div>
   <table>
     <thead><tr>
       <th>Bulan</th>
-      <th class="num">Pemasukan SPP</th><th class="num">SPP Belum Masuk</th>
-      <th class="num">Pemasukan Catering</th><th class="num">Catering Belum Masuk</th>
-      <th class="num">Total Pemasukan</th><th class="num">Total Belum Masuk</th>
+      <th class="r">Pemasukan SPP</th><th class="r">SPP Belum Masuk</th>
+      <th class="r">Pemasukan Catering</th><th class="r">Catering Belum Masuk</th>
+      <th class="r">Total Pemasukan</th><th class="r">Total Belum Masuk</th>
     </tr></thead>
     <tbody>
       ${rows}
       <tr class="total-row">
-        <td>TOTAL</td>
-        <td style="text-align:right;">${idr(totPemasukanSpp)}</td>
-        <td style="text-align:right;color:#e74c3c;">${idr(totBelumSpp)}</td>
-        <td style="text-align:right;">${idr(totPemasukanCat)}</td>
-        <td style="text-align:right;color:#e74c3c;">${idr(totBelumCat)}</td>
-        <td style="text-align:right;">${idr(totPemasukan)}</td>
-        <td style="text-align:right;color:#e74c3c;">${idr(totBelum)}</td>
+        <td>TOTAL KESELURUHAN</td>
+        <td class="r">${idr(totPemasukanSpp)}</td>
+        <td class="r" style="color:#e74c3c;">${idr(totBelumSpp)}</td>
+        <td class="r">${idr(totPemasukanCat)}</td>
+        <td class="r" style="color:#e74c3c;">${idr(totBelumCat)}</td>
+        <td class="r">${idr(totPemasukan)}</td>
+        <td class="r" style="color:#e74c3c;">${idr(totBelum)}</td>
       </tr>
     </tbody>
   </table>
-  <div class="footer">★ = Bulan berjalan &nbsp;|&nbsp; - = Belum berjalan &nbsp;|&nbsp; Sistem Administrasi Darul Falah Gambut &nbsp;•&nbsp; ${tgl}</div>
+  <div class="footer">
+    <span>Sistem Administrasi Darul Falah Gambut &nbsp;|&nbsp; ★ = Bulan berjalan &nbsp;|&nbsp; — = Belum berjalan</span>
+    <span>Dicetak: ${tgl}</span>
+  </div>
 </body></html>`;
 
   const win = window.open('', '_blank');
   if (!win) { toast('Popup diblokir. Izinkan popup untuk export PDF.', 'error'); return; }
-  win.document.write(html);
-  win.document.close();
+  win.document.write(html); win.document.close();
   win.onload = () => { win.focus(); win.print(); };
 }
-
 // ─── Laporan Tunggakan ────────────────────────────────
 
 let tungPage = 1;
@@ -6105,44 +6163,59 @@ function exportTunggakanPDF() {
     }
   }).join('');
 
-  const thStack = `<th>#</th><th>Nama / Bin-Binti</th><th>L/P</th><th>Alamat</th><th>${ketLabel}</th><th>Tingkat</th><th>Bulan</th><th>Tagihan</th>`;
-  const thRekap = `<th>#</th><th>Nama / Bin-Binti</th><th>L/P</th><th>Alamat</th><th>${ketLabel}</th><th>Tingkat</th><th>Bulan Belum Bayar</th><th>Total Tunggak</th>`;
+  const thStack = `<th style="width:24px;">#</th><th>Nama / Bin-Binti</th><th>L/P</th><th>Alamat</th><th>${ketLabel}</th><th>Tingkat</th><th>Bulan</th><th>Tagihan</th>`;
+  const thRekap = `<th style="width:24px;">#</th><th>Nama / Bin-Binti</th><th>L/P</th><th>Alamat</th><th>${ketLabel}</th><th>Tingkat</th><th>Bulan Belum Bayar</th><th>Total Tunggak</th>`;
 
-  const html = `<!DOCTYPE html>
-<html><head>
+  const html = `<!DOCTYPE html><html><head>
   <meta charset="UTF-8"/>
   <title>Laporan Tunggakan ${judul} (${modeLabel}) — ${ta}</title>
   <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family:Arial,sans-serif; font-size:11px; color:#222; padding:14px; }
-    .header { text-align:center; margin-bottom:14px; border-bottom:2px solid #00897b; padding-bottom:10px; }
-    .header h2 { font-size:14px; color:#00897b; margin-bottom:3px; }
-    .header p  { font-size:10px; color:#666; }
-    .summary { display:flex; gap:10px; margin-bottom:12px; }
-    .stat { flex:1; border:1px solid #ddd; border-radius:5px; padding:7px 9px; }
-    .stat-val { font-size:13px; font-weight:800; color:#e74c3c; }
-    .stat-lbl { font-size:9px; color:#888; }
-    table { width:100%; border-collapse:collapse; }
-    th { background:#00897b; color:white; padding:5px 7px; text-align:left; font-size:10px; }
-    .footer { margin-top:12px; font-size:9px; color:#aaa; text-align:right; border-top:1px solid #eee; padding-top:6px; }
-    @media print { body{padding:6px;} @page{margin:10mm;size:A4 landscape;} }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'Arial',sans-serif;font-size:10px;color:#1a1a1a;background:white;padding:16px 20px;}
+    .kop{display:flex;align-items:center;gap:14px;border-bottom:3px solid #c62828;padding-bottom:10px;margin-bottom:14px;}
+    .kop-logo{width:48px;height:48px;background:#c62828;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white;font-size:18px;font-weight:900;}
+    .kop-text h1{font-size:13px;font-weight:900;color:#c62828;margin-bottom:2px;}
+    .kop-text p{font-size:9px;color:#555;}
+    .judul{text-align:center;margin-bottom:12px;}
+    .judul h2{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;border:1px solid #ccc;display:inline-block;padding:4px 14px;border-radius:4px;}
+    .judul p{font-size:10px;color:#666;margin-top:3px;}
+    .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+    .stat-box{border:1px solid #e0e0e0;border-radius:5px;padding:7px 9px;border-left:3px solid #c62828;}
+    .stat-label{font-size:8px;color:#888;font-weight:700;text-transform:uppercase;margin-bottom:2px;}
+    .stat-value{font-size:12px;font-weight:800;color:#c62828;}
+    table{width:100%;border-collapse:collapse;}
+    th{background:#c62828;color:white;padding:6px 7px;font-size:9px;font-weight:700;text-align:left;white-space:nowrap;}
+    td{padding:5px 7px;border-bottom:1px solid #f0f0f0;font-size:9px;vertical-align:middle;}
+    tr:nth-child(even) td{background:#fafafa;}
+    .grp-hdr td{background:#f4f4f4!important;padding:5px 8px;font-size:9px;font-weight:700;border-top:1.5px solid #ddd;}
+    .footer{margin-top:10px;padding-top:7px;border-top:1px dashed #ddd;display:flex;justify-content:space-between;font-size:8px;color:#aaa;}
+    @media print{body{padding:8px 12px;}@page{margin:8mm;size:A4 landscape;}}
   </style>
-</head>
-<body>
-  <div class="header">
-    <h2>Laporan Tunggakan ${judul} (${modeLabel}) — Pondok Pesantren Darul Falah Gambut</h2>
-    <p>Tahun Ajaran: <strong>${ta}</strong> &nbsp;|&nbsp; Dicetak: ${tglCetak}</p>
+</head><body>
+  <div class="kop">
+    <div class="kop-logo">DF</div>
+    <div class="kop-text">
+      <h1>Pondok Pesantren Darul Falah Gambut</h1>
+      <p>Gambut, Kabupaten Banjar, Kalimantan Selatan</p>
+    </div>
   </div>
-  <div class="summary">
-    <div class="stat"><div class="stat-val">${santriNunggak}</div><div class="stat-lbl">Santri Menunggak</div></div>
-    <div class="stat"><div class="stat-val">${totalBulanNunggak}</div><div class="stat-lbl">Total Bulan Tunggak</div></div>
-    <div class="stat"><div class="stat-val" style="font-size:11px;">${idr(totalNominal)}</div><div class="stat-lbl">Total Nominal</div></div>
+  <div class="judul">
+    <h2>Laporan Tunggakan ${judul} — ${modeLabel}</h2>
+    <p>Tahun Ajaran ${ta}</p>
+  </div>
+  <div class="summary-grid">
+    <div class="stat-box"><div class="stat-label">Santri Menunggak</div><div class="stat-value">${santriNunggak} santri</div></div>
+    <div class="stat-box"><div class="stat-label">Total Bulan Tunggak</div><div class="stat-value">${totalBulanNunggak} bulan</div></div>
+    <div class="stat-box"><div class="stat-label">Total Nominal</div><div class="stat-value">${idr(totalNominal)}</div></div>
   </div>
   <table>
-    <thead><tr>${mode === 'stack' ? thStack : thRekap}</tr></thead>
+    <thead><tr class="grp-hdr">${mode==='stack'?thStack:thRekap}</tr></thead>
     <tbody>${rows}</tbody>
   </table>
-  <div class="footer">Sistem Administrasi Darul Falah Gambut &nbsp;•&nbsp; ${tglCetak}</div>
+  <div class="footer">
+    <span>Sistem Administrasi Darul Falah Gambut</span>
+    <span>Dicetak: ${tglCetak}</span>
+  </div>
 </body></html>`;
 
   const win = window.open('', '_blank');
@@ -6474,4 +6547,3 @@ function openResetModal() {
 }
 
 </script>
-w
