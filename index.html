@@ -1413,7 +1413,54 @@ body.modal-open { overflow: hidden; touch-action: none; }
 }
 .kk-pagination { display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; margin-top: 10px; }
 
-/* ── Laporan Keuangan ── */
+/* ── Import & Backup ── */
+.import-zone {
+  border: 2px dashed var(--border); border-radius: 12px;
+  padding: 20px 16px; text-align: center; cursor: pointer;
+  transition: all 0.2s; background: var(--bg); margin-bottom: 12px;
+}
+.import-zone:hover, .import-zone.drag-over {
+  border-color: var(--teal-1); background: var(--teal-xlight);
+}
+.import-zone svg { color: var(--text-light); margin-bottom: 8px; }
+.import-zone-title { font-size: 13px; font-weight: 700; color: var(--text-dark); margin-bottom: 4px; }
+.import-zone-sub { font-size: 11px; color: var(--text-light); }
+.import-result {
+  border-radius: 10px; border: 1px solid var(--border);
+  overflow: hidden; margin-bottom: 12px;
+}
+.import-result-head {
+  padding: 10px 14px; background: var(--teal-xlight);
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+}
+.import-result-title { font-size: 13px; font-weight: 700; color: var(--teal-2); }
+.import-stats { display: flex; gap: 10px; flex-wrap: wrap; }
+.import-stat { font-size: 11px; font-weight: 700; }
+.import-stat.ok  { color: #2e7d32; }
+.import-stat.skip { color: #e65100; }
+.import-stat.err  { color: #c62828; }
+.import-preview-wrap { overflow-x: auto; max-height: 260px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.import-preview-tbl { width: 100%; border-collapse: collapse; font-size: 11px; min-width: 480px; }
+.import-preview-tbl th { background: #f5f5f5; padding: 6px 10px; text-align: left; font-size: 10px; font-weight: 700; color: var(--text-mid); white-space: nowrap; position: sticky; top: 0; }
+.import-preview-tbl td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+.import-preview-tbl tr.row-ok   td { background: #f1f8f1; }
+.import-preview-tbl tr.row-skip td { background: #fff8f0; color: #e65100; }
+.import-preview-tbl tr.row-err  td { background: #fff0f0; color: #c62828; }
+.row-status { display: inline-block; padding: 1px 7px; border-radius: 10px; font-size: 9px; font-weight: 700; white-space: nowrap; }
+.row-status.ok   { background: #e8f5e9; color: #2e7d32; }
+.row-status.skip { background: #fff3e0; color: #e65100; }
+.row-status.err  { background: #ffebee; color: #c62828; }
+.backup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.btn-backup {
+  height: 54px; border-radius: 12px; border: 1.5px solid var(--border);
+  background: white; cursor: pointer; font-family: 'Poppins', sans-serif;
+  font-size: 12px; font-weight: 700; color: var(--text-dark);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; transition: all 0.15s;
+}
+.btn-backup:hover { border-color: var(--teal-1); background: var(--teal-xlight); color: var(--teal-2); }
+.btn-backup svg { width: 18px; height: 18px; }
+.btn-backup span { font-size: 10px; font-weight: 600; color: var(--text-light); }
 .lap-sub-tabs {
   display: flex; gap: 6px; margin-bottom: 14px; flex-wrap: wrap;
 }
@@ -2035,9 +2082,12 @@ function buildSkeleton() {
 function buildDashboard() {
   const d = appData;
   const s = d.setting;
-  const aktif = d.santri.filter(x => x.status_santri === 'aktif');
-  const laki = aktif.filter(x => x.gender === 'santri').length;
-  const prmp = aktif.filter(x => x.gender === 'santriwati').length;
+  const aktif   = d.santri.filter(x => x.status_santri === 'aktif');
+  const alumni  = d.santri.filter(x => x.status_santri === 'alumni').length;
+  const berhenti = d.santri.filter(x => x.status_santri === 'berhenti').length;
+  const nonAktif = alumni + berhenti;
+  const laki  = aktif.filter(x => x.gender === 'santri').length;
+  const prmp  = aktif.filter(x => x.gender === 'santriwati').length;
   const total = aktif.length;
   const tarifSPP = s?.tarif_spp || 0;
   const tarifCat = s?.tarif_catering || 0;
@@ -2087,22 +2137,26 @@ function buildDashboard() {
   <div class="dash-section">
     <div class="santri-card">
       <div class="santri-stats">
-        <div class="santri-card-title">Jumlah Santri</div>
+        <div class="santri-card-title">Santri Aktif</div>
         <div class="santri-row">
-          <span class="santri-row-label">Santri</span>
+          <span class="santri-row-label">Santri (L)</span>
           <span class="santri-row-val count-num" data-target="${laki}">0</span>
         </div>
         <div class="santri-row">
-          <span class="santri-row-label">Santriwati</span>
+          <span class="santri-row-label">Santriwati (P)</span>
           <span class="santri-row-val count-num" data-target="${prmp}">0</span>
         </div>
-        <div class="santri-row">
-          <span class="santri-row-label" style="font-weight:600;color:var(--text-dark);">Total</span>
+        <div class="santri-row" style="border-top:1px solid var(--border);margin-top:6px;padding-top:6px;">
+          <span class="santri-row-label" style="font-weight:700;color:var(--text-dark);">Total Aktif</span>
           <span class="santri-row-val total count-num" data-target="${total}">0</span>
         </div>
+        <div class="santri-row" style="margin-top:8px;">
+          <span class="santri-row-label" style="color:#1565c0;">Alumni</span>
+          <span class="santri-row-val count-num" data-target="${alumni}" style="color:#1565c0;">0</span>
+        </div>
         <div class="santri-row">
-          <span class="santri-row-label">Aktif</span>
-          <span class="santri-row-val count-num" data-target="${total}">0</span>
+          <span class="santri-row-label" style="color:#e65100;">Berhenti</span>
+          <span class="santri-row-val count-num" data-target="${berhenti}" style="color:#e65100;">0</span>
         </div>
       </div>
       <div class="donut-wrap">
@@ -4449,6 +4503,79 @@ function buildSettingPage() {
       </div>
     </div>
 
+    <!-- Import & Backup Data -->
+    <div class="setting-section">
+      <div class="setting-section-head accordion" data-acc="import">
+        <div class="setting-section-icon" style="background:linear-gradient(135deg,#7b1fa2,#4a148c);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        </div>
+        <span class="setting-section-title">Import & Backup Data</span>
+        <svg class="accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="setting-section-body" id="acc-body-import">
+
+        <!-- Backup & Template -->
+        <div style="font-size:12px;font-weight:700;color:var(--text-mid);margin-bottom:8px;">⬇️ Download</div>
+        <div class="backup-grid" style="margin-bottom:16px;">
+          <button class="btn-backup" id="btn-download-template">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><polyline points="8 13 12 17 16 13"/><line x1="12" y1="9" x2="12" y2="17"/></svg>
+            Template Import
+            <span>CSV — format kolom santri</span>
+          </button>
+          <button class="btn-backup" id="btn-backup-santri">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Backup Data Santri
+            <span>CSV — semua data santri</span>
+          </button>
+        </div>
+
+        <!-- Import -->
+        <div style="font-size:12px;font-weight:700;color:var(--text-mid);margin-bottom:8px;">⬆️ Import Santri</div>
+        <div class="import-zone" id="import-drop-zone">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div class="import-zone-title">Drag & drop file CSV atau Excel di sini</div>
+          <div class="import-zone-sub">atau klik untuk pilih file &nbsp;•&nbsp; .csv / .xlsx / .xls</div>
+          <input type="file" id="import-file-input" accept=".csv,.xlsx,.xls" style="display:none;"/>
+        </div>
+
+        <!-- Preview & hasil parse -->
+        <div id="import-result-wrap" style="display:none;">
+          <div class="import-result">
+            <div class="import-result-head">
+              <span class="import-result-title" id="import-result-title">Preview</span>
+              <div class="import-stats">
+                <span class="import-stat ok" id="import-count-ok">0 baru</span>
+                <span class="import-stat skip" id="import-count-skip">0 duplikat</span>
+                <span class="import-stat err" id="import-count-err">0 error</span>
+              </div>
+            </div>
+            <div class="import-preview-wrap">
+              <table class="import-preview-tbl">
+                <thead id="import-preview-thead"></thead>
+                <tbody id="import-preview-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-simpan" id="btn-import-eksekusi" style="flex:1;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+              Import Sekarang
+            </button>
+            <button id="btn-import-batal" style="height:44px;padding:0 16px;border-radius:12px;background:white;border:1.5px solid var(--border);cursor:pointer;font-family:'Poppins',sans-serif;font-size:13px;color:var(--text-mid);">Batal</button>
+          </div>
+        </div>
+
+        <!-- Catatan kolom -->
+        <div style="margin-top:12px;padding:10px 12px;background:#f8f9fa;border-radius:8px;font-size:10px;color:var(--text-light);line-height:1.7;">
+          <strong style="color:var(--text-mid);">Kolom yang didukung:</strong><br/>
+          nama*, bin_binti*, alamat, tempat_lahir, tanggal_lahir (DD/MM/YYYY), gender (santri/santriwati),
+          nik, kk, no_wa, tahun_masuk, kelas, status_santri (aktif/alumni/berhenti)<br/>
+          <span style="color:#e74c3c;">* = wajib &nbsp;•&nbsp; Duplikat dicek berdasarkan nama + bin_binti</span>
+        </div>
+
+      </div>
+    </div>
+
     <!-- Laporan -->
     <div class="setting-section">
       <div class="setting-section-head accordion" data-acc="laporan">
@@ -4773,6 +4900,7 @@ function bindSettingEvents() {
       // Jika laporan baru dibuka, render datanya
       if (!isOpen && key === 'laporan')   { renderLapBulanan(); }
       if (!isOpen && key === 'kenaikan')  { kkInitialized = false; renderKenaikanKelas(); }
+      if (!isOpen && key === 'import')    { bindImportEvents(); }
     });
   });
 
@@ -5340,6 +5468,275 @@ function openConfirmModal(title, msg, onOk) {
     overlay.remove(); unlockBody();
     await onOk();
   });
+}
+
+// ─── Import & Backup Data ─────────────────────────────
+
+// Kolom template CSV (sesuai tabel santri)
+const IMPORT_COLS = [
+  'nama','bin_binti','alamat','tempat_lahir','tanggal_lahir',
+  'gender','nik','kk','no_wa','tahun_masuk','kelas','status_santri'
+];
+
+let importParsed = []; // hasil parse sebelum commit
+
+// ── Bind events (dipanggil saat accordion dibuka) ──
+let importBound = false;
+function bindImportEvents() {
+  if (importBound) return;
+  importBound = true;
+
+  // Download template
+  document.getElementById('btn-download-template')?.addEventListener('click', () => {
+    const header = IMPORT_COLS.join(',');
+    const example = 'Ahmad Fauzi,Ahmad,Jl. Melati No.1,Banjarmasin,23/01/2008,santri,,,08123456789,2020,Awwaliyah A,aktif';
+    const csv = header + '\n' + example;
+    downloadText(csv, 'template_import_santri.csv', 'text/csv');
+    toast('Template berhasil didownload!');
+  });
+
+  // Backup semua data santri
+  document.getElementById('btn-backup-santri')?.addEventListener('click', () => {
+    const rows = appData.santri.map(s => IMPORT_COLS.map(col => {
+      let v = s[col] ?? '';
+      // Format tanggal dari YYYY-MM-DD ke DD/MM/YYYY
+      if (col === 'tanggal_lahir' && v) {
+        const d = v.split('-');
+        if (d.length === 3) v = `${d[2]}/${d[1]}/${d[0]}`;
+      }
+      // Escape koma dan petik
+      if (String(v).includes(',') || String(v).includes('"')) v = `"${String(v).replace(/"/g,'""')}"`;
+      return v;
+    }).join(','));
+    const csv = IMPORT_COLS.join(',') + '\n' + rows.join('\n');
+    const tgl = new Date().toISOString().slice(0,10);
+    downloadText(csv, `backup_santri_${tgl}.csv`, 'text/csv');
+    toast(`Backup ${appData.santri.length} santri berhasil didownload!`);
+  });
+
+  // Drop zone
+  const zone = document.getElementById('import-drop-zone');
+  const fileInput = document.getElementById('import-file-input');
+  if (zone) {
+    zone.addEventListener('click', () => fileInput?.click());
+    zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+      e.preventDefault(); zone.classList.remove('drag-over');
+      const file = e.dataTransfer.files?.[0];
+      if (file) handleImportFile(file);
+    });
+  }
+  fileInput?.addEventListener('change', e => {
+    const file = e.target.files?.[0];
+    if (file) handleImportFile(file);
+  });
+
+  // Tombol batal
+  document.getElementById('btn-import-batal')?.addEventListener('click', () => {
+    importParsed = [];
+    document.getElementById('import-result-wrap').style.display = 'none';
+    if (fileInput) fileInput.value = '';
+  });
+
+  // Tombol eksekusi import
+  document.getElementById('btn-import-eksekusi')?.addEventListener('click', doImport);
+}
+
+function downloadText(content, filename, mime) {
+  const blob = new Blob(['\ufeff' + content], { type: mime + ';charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function handleImportFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  toast('Memproses file...', 'info');
+
+  let rows = [];
+  if (ext === 'csv') {
+    const text = await file.text();
+    rows = parseCSV(text);
+  } else if (ext === 'xlsx' || ext === 'xls') {
+    rows = await parseXLSX(file);
+  } else {
+    toast('Format tidak didukung. Gunakan CSV atau Excel (.xlsx/.xls)', 'error'); return;
+  }
+
+  if (!rows.length) { toast('File kosong atau format tidak dikenali', 'error'); return; }
+
+  // Proses dan validasi
+  const existingSet = new Set(
+    appData.santri.map(s => `${(s.nama||'').toLowerCase().trim()}||${(s.bin_binti||'').toLowerCase().trim()}`)
+  );
+
+  importParsed = rows.map((row, i) => {
+    const nama     = (row.nama || '').trim();
+    const bin_binti = (row.bin_binti || '').trim();
+    const key      = `${nama.toLowerCase()}||${bin_binti.toLowerCase()}`;
+
+    let status = 'ok';
+    let reason = '';
+
+    if (!nama) { status = 'err'; reason = 'Nama kosong'; }
+    else if (!bin_binti) { status = 'err'; reason = 'Bin/Binti kosong'; }
+    else if (existingSet.has(key)) { status = 'skip'; reason = 'Sudah ada (duplikat)'; }
+
+    // Konversi tanggal DD/MM/YYYY → YYYY-MM-DD
+    let tgl = row.tanggal_lahir || '';
+    if (tgl) {
+      const m = tgl.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/);
+      if (m) tgl = `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;
+    }
+
+    // Validasi gender
+    let gender = (row.gender || 'santri').toLowerCase().trim();
+    if (!['santri','santriwati'].includes(gender)) gender = 'santri';
+
+    // Validasi status
+    let statusSantri = (row.status_santri || 'aktif').toLowerCase().trim();
+    if (!['aktif','alumni','berhenti'].includes(statusSantri)) statusSantri = 'aktif';
+
+    return {
+      _row: i + 2, _status: status, _reason: reason,
+      nama, bin_binti,
+      alamat:        row.alamat        || null,
+      tempat_lahir:  row.tempat_lahir  || null,
+      tanggal_lahir: tgl               || null,
+      gender,
+      nik:           row.nik           || null,
+      kk:            row.kk            || null,
+      no_wa:         row.no_wa         || null,
+      tahun_masuk:   row.tahun_masuk ? parseInt(row.tahun_masuk) : null,
+      kelas:         row.kelas         || null,
+      status_santri: statusSantri,
+    };
+  });
+
+  renderImportPreview();
+}
+
+function parseCSV(text) {
+  const lines = text.replace(/\r/g,'').split('\n').filter(l => l.trim());
+  if (!lines.length) return [];
+  const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s+/g,'_'));
+  return lines.slice(1).map(line => {
+    // Handle quoted fields
+    const cells = []; let cur = ''; let inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      if (line[i] === '"' && !inQ) { inQ = true; }
+      else if (line[i] === '"' && inQ && line[i+1] === '"') { cur += '"'; i++; }
+      else if (line[i] === '"' && inQ) { inQ = false; }
+      else if (line[i] === ',' && !inQ) { cells.push(cur.trim()); cur = ''; }
+      else { cur += line[i]; }
+    }
+    cells.push(cur.trim());
+    const obj = {};
+    headers.forEach((h, i) => { obj[h] = cells[i] || ''; });
+    return obj;
+  });
+}
+
+async function parseXLSX(file) {
+  // Pakai SheetJS via CDN — inject jika belum ada
+  if (!window.XLSX) {
+    await new Promise((res, rej) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+      s.onload = res; s.onerror = rej;
+      document.head.appendChild(s);
+    });
+  }
+  const buf = await file.arrayBuffer();
+  const wb  = window.XLSX.read(buf, { type: 'array' });
+  const ws  = wb.Sheets[wb.SheetNames[0]];
+  const json = window.XLSX.utils.sheet_to_json(ws, { defval: '' });
+  // Normalisasi header
+  return json.map(row => {
+    const norm = {};
+    Object.entries(row).forEach(([k, v]) => {
+      norm[k.toLowerCase().trim().replace(/\s+/g,'_')] = String(v).trim();
+    });
+    return norm;
+  });
+}
+
+function renderImportPreview() {
+  const wrap = document.getElementById('import-result-wrap');
+  if (!wrap) return;
+  wrap.style.display = '';
+
+  const ok   = importParsed.filter(r => r._status === 'ok').length;
+  const skip = importParsed.filter(r => r._status === 'skip').length;
+  const err  = importParsed.filter(r => r._status === 'err').length;
+
+  document.getElementById('import-result-title').textContent = `Preview — ${importParsed.length} baris`;
+  document.getElementById('import-count-ok').textContent   = `${ok} baru`;
+  document.getElementById('import-count-skip').textContent = `${skip} duplikat`;
+  document.getElementById('import-count-err').textContent  = `${err} error`;
+
+  document.getElementById('import-preview-thead').innerHTML = `<tr>
+    <th>#</th><th>Status</th><th>Nama</th><th>Bin/Binti</th><th>Kelas</th><th>Gender</th><th>Keterangan</th>
+  </tr>`;
+
+  document.getElementById('import-preview-tbody').innerHTML = importParsed.map(r => `
+    <tr class="row-${r._status}">
+      <td style="color:var(--text-light);">${r._row}</td>
+      <td><span class="row-status ${r._status}">${r._status === 'ok'?'Baru':r._status === 'skip'?'Duplikat':'Error'}</span></td>
+      <td style="font-weight:700;">${r.nama||'-'}</td>
+      <td>${r.bin_binti||'-'}</td>
+      <td>${r.kelas||'-'}</td>
+      <td>${r.gender}</td>
+      <td style="color:${r._status==='err'?'#c62828':r._status==='skip'?'#e65100':'var(--text-light)'};">${r._reason||'Siap diimport'}</td>
+    </tr>`).join('');
+
+  // Disable tombol jika tidak ada yang bisa diimport
+  const btn = document.getElementById('btn-import-eksekusi');
+  if (btn) {
+    btn.disabled = ok === 0;
+    btn.innerHTML = ok > 0
+      ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Import ${ok} Santri Baru`
+      : 'Tidak ada data baru';
+  }
+}
+
+async function doImport() {
+  const toInsert = importParsed.filter(r => r._status === 'ok').map(r => {
+    const { _row, _status, _reason, ...data } = r;
+    return data;
+  });
+  if (!toInsert.length) { toast('Tidak ada data baru untuk diimport', 'error'); return; }
+
+  const btn = document.getElementById('btn-import-eksekusi');
+  btn.disabled = true;
+  btn.innerHTML = '<div style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;margin:0 auto;"></div>';
+
+  // Insert batch ke Supabase (max 500 per batch)
+  let totalInserted = 0;
+  const batchSize = 500;
+  for (let i = 0; i < toInsert.length; i += batchSize) {
+    const batch = toInsert.slice(i, i + batchSize);
+    const { data: inserted, error } = await sb.from('santri').insert(batch).select();
+    if (error) {
+      toast(`Gagal import batch ${Math.floor(i/batchSize)+1}: ${error.message}`, 'error');
+      btn.disabled = false;
+      btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Import ${toInsert.length} Santri Baru`;
+      return;
+    }
+    if (inserted) {
+      appData.santri.push(...inserted);
+      totalInserted += inserted.length;
+    }
+  }
+
+  importParsed = [];
+  document.getElementById('import-result-wrap').style.display = 'none';
+  document.getElementById('import-file-input').value = '';
+  toast(`✅ ${totalInserted} santri berhasil diimport!`);
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Import Sekarang';
 }
 
 // ─── Laporan Keuangan ─────────────────────────────────
