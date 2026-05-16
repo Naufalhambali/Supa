@@ -1,5 +1,5 @@
 // ─── Service Worker — Darul Falah Admin PWA ───────────
-const CACHE_NAME  = 'darul-falah-v1';
+const CACHE_NAME  = 'darul-falah-v2';
 const STATIC_URLS = [
   './',
   './index.html',
