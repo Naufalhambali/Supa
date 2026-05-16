@@ -1656,6 +1656,10 @@ body.modal-open { overflow: hidden; touch-action: none; }
     <div class="header-menu-btn" id="header-menu-btn" style="position:relative;">
       <span>☰</span>
       <div class="header-dropdown hidden" id="header-dropdown">
+        <div id="hdd-session-info" style="padding:10px 14px 8px;border-bottom:1px solid var(--border);margin-bottom:4px;">
+          <div style="font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:3px;">Status Sesi</div>
+          <div id="hdd-session-status" style="font-size:11px;color:var(--teal-2);font-weight:600;">⏱️ Menghitung...</div>
+        </div>
         <div class="hdd-item" id="hdd-refresh">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
           Refresh Data
@@ -1985,6 +1989,7 @@ async function doLogin() {
     }
 
     currentUser = data.user;
+    resetInactivityTimer();
     showScreen('screen-app');
     renderPage('dashboard', true);
     await loadAll();
@@ -2001,27 +2006,114 @@ async function doLogin() {
   }
 }
 
-async function doLogout() {
-  await sb.auth.signOut();
-  const dd = document.getElementById('header-dropdown');
-  if (dd) dd.classList.add('hidden');
+// ══════════════════════════════════════════════════════════
+// ─── LOGOUT & SESSION MANAGEMENT ─────────────────────────
+// ══════════════════════════════════════════════════════════
+
+// Durasi auto logout karena inaktivitas: 60 menit
+const AUTO_LOGOUT_MS = 60 * 60 * 1000;
+let _inactivityTimer = null;
+let _inactivityLastReset = Date.now();
+
+function resetInactivityTimer() {
+  clearTimeout(_inactivityTimer);
+  _inactivityLastReset = Date.now();
+  _inactivityTimer = setTimeout(() => {
+    doLogout('inaktif');
+  }, AUTO_LOGOUT_MS);
+}
+
+// Pantau aktivitas user — reset timer setiap ada interaksi
+['click','touchstart','keydown','scroll'].forEach(ev => {
+  document.addEventListener(ev, resetInactivityTimer, { passive: true });
+});
+
+async function doLogout(reason = '') {
+  // Hentikan timer inaktivitas
+  clearTimeout(_inactivityTimer);
+
+  // Tutup dropdown jika terbuka
+  document.getElementById('header-dropdown')?.classList.add('hidden');
+
+  // Sign out dari Supabase — paksa scope global agar semua tab ikut logout
+  try {
+    await sb.auth.signOut({ scope: 'global' });
+  } catch(e) {
+    // Tetap lanjut logout lokal walau network error
+    console.warn('signOut error:', e);
+  }
+
+  // Bersihkan state lokal
+  currentUser = null;
+  appData = { setting: null, santri: [], spp: [], catering: [], logs: [], profile: null, allProfiles: [] };
+
   // Reset form login
   const emailEl = document.getElementById('inp-email');
   const passEl  = document.getElementById('inp-password');
   if (emailEl) emailEl.value = '';
   if (passEl)  { passEl.value = ''; passEl.type = 'password'; }
-  const eyeIcon = document.getElementById('eye-icon');
-  if (eyeIcon) eyeIcon.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
-  toast('Berhasil logout', 'info');
+  document.getElementById('eye-icon').innerHTML =
+    `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+
+  // Pesan sesuai alasan logout
+  const msg = reason === 'inaktif'
+    ? '⏱️ Sesi berakhir karena tidak aktif. Silakan login kembali.'
+    : reason === 'expired'
+    ? '🔒 Sesi login habis. Silakan login kembali.'
+    : 'Berhasil logout';
+  toast(msg, reason ? 'info' : 'info');
+
   showScreen('screen-login');
 }
 
-// ─── SESSION CHECK ─────────────────────────────────
+// ─── REAKTIF terhadap perubahan session Supabase ──────────
+// Menangani: token expired, logout dari tab lain, revoke session
+sb.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED' && !session) {
+    if (currentUser) {
+      // User di-logout dari luar (token expired, tab lain logout, dll)
+      currentUser = null;
+      appData = { setting: null, santri: [], spp: [], catering: [], logs: [], profile: null, allProfiles: [] };
+      clearTimeout(_inactivityTimer);
+      toast('🔒 Sesi login habis. Silakan login kembali.', 'info');
+      showScreen('screen-login');
+    }
+  } else if (event === 'SIGNED_IN' && session) {
+    currentUser = session.user;
+    resetInactivityTimer();
+  }
+});
+
+// ─── Revalidasi session saat app kembali dari background ──
+// Kasus: user tutup HP lama, buka lagi — token mungkin sudah expired
+document.addEventListener('visibilitychange', async () => {
+  if (document.visibilityState !== 'visible') return;
+  // Hanya cek jika sedang di screen-app
+  if (!document.getElementById('screen-app')?.classList.contains('active')) return;
+
+  try {
+    const { data, error } = await sb.auth.getSession();
+    if (error || !data?.session) {
+      // Session sudah tidak valid
+      doLogout('expired');
+    } else {
+      // Session masih valid — refresh token jika mendekati expiry
+      currentUser = data.session.user;
+      resetInactivityTimer();
+    }
+  } catch(e) {
+    // Network error saat cek — jangan logout, biarkan offline mode
+    console.warn('visibilitychange session check failed:', e);
+  }
+});
+
+// ─── SESSION CHECK saat pertama kali load ─────────────────
 (async () => {
   try {
     const { data, error } = await sb.auth.getSession();
     if (data?.session) {
       currentUser = data.session.user;
+      resetInactivityTimer();
       showScreen('screen-app');
       renderPage('dashboard', true);
       await loadAll();
@@ -2137,7 +2229,26 @@ function updateHeaderProfile() {
 document.getElementById('header-menu-btn').addEventListener('click', e => {
   e.stopPropagation();
   document.getElementById('header-dropdown').classList.toggle('hidden');
+  // Update info sisa waktu sesi setiap dropdown dibuka
+  updateSessionInfo();
 });
+
+function updateSessionInfo() {
+  const el = document.getElementById('hdd-session-status');
+  if (!el || !_inactivityTimer) return;
+  // Hitung sisa waktu dari timer inaktivitas
+  // _inactivityLastReset disimpan saat resetInactivityTimer dipanggil
+  const elapsed = Date.now() - (_inactivityLastReset || Date.now());
+  const remaining = AUTO_LOGOUT_MS - elapsed;
+  if (remaining <= 0) { el.textContent = '⚠️ Sesi segera berakhir'; el.style.color = '#e74c3c'; return; }
+  const mnt = Math.floor(remaining / 60000);
+  const jam = Math.floor(mnt / 60);
+  const sisaMnt = mnt % 60;
+  const label = jam > 0 ? `${jam}j ${sisaMnt}m` : `${mnt} menit`;
+  const warna = mnt < 10 ? '#e65100' : mnt < 20 ? '#d97706' : 'var(--teal-2)';
+  el.style.color = warna;
+  el.textContent = `⏱️ Aktif — logout otomatis ${label} lagi`;
+}
 document.addEventListener('click', () => document.getElementById('header-dropdown')?.classList.add('hidden'));
 document.getElementById('hdd-logout')?.addEventListener('click', doLogout);
 document.getElementById('hdd-refresh')?.addEventListener('click', async (e) => {
