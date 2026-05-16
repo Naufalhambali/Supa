@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, interactive-widget=resizes-content"/>
+<meta name="theme-color" content="#00897b"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="Darul Falah"/>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="assets/logo.png"/>
 <title>Darul Falah Gambut — Portal Administrasi</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1289,7 +1296,6 @@ body {
   z-index: 900; animation: fadeIn 0.2s ease;
   padding: 20px;
 }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 .photo-viewer-inner {
   position: relative; max-width: 340px; width: 100%;
   display: flex; flex-direction: column; align-items: center; gap: 14px;
@@ -2326,7 +2332,26 @@ let santriState = {
 };
 
 // ─── Filter + pagination helper ─────────────────────
+// ─── Utility: debounce ─────────────────────────────
+function debounce(fn, ms = 200) {
+  let t;
+  return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+// ─── Cache getSantriFiltered ────────────────────────
+let _santriFilteredCache = null;
+let _santriFilteredKey   = '';
+
+function invalidateSantriCache() {
+  _santriFilteredCache = null;
+  _santriFilteredKey   = '';
+}
+
 function getSantriFiltered() {
+  const key = `${santriState.search}|${santriState.filterGender}|${santriState.filterStatus}|${santriState.filterTahunMasuk}|${appData.santri.length}`;
+  if (key === _santriFilteredKey && _santriFilteredCache) return _santriFilteredCache;
+  _santriFilteredKey = key;
+
   let list = [...appData.santri];
   if (santriState.search) {
     const q = santriState.search.toLowerCase();
@@ -2340,8 +2365,7 @@ function getSantriFiltered() {
   if (santriState.filterStatus !== 'all') list = list.filter(s => s.status_santri === santriState.filterStatus);
   if (santriState.filterTahunMasuk !== 'all') list = list.filter(s => String(s.tahun_masuk) === santriState.filterTahunMasuk);
 
-  // Sort: aktif dulu, alumni & berhenti paling bawah
-  const statusOrder = { 'aktif': 0, 'alumni': 1, 'berhenti': 2 };
+  const statusOrder = { aktif: 0, alumni: 1, berhenti: 2 };
   list.sort((a, b) => {
     const sa = statusOrder[a.status_santri] ?? 0;
     const sb = statusOrder[b.status_santri] ?? 0;
@@ -2349,6 +2373,7 @@ function getSantriFiltered() {
     return (a.nama || '').localeCompare(b.nama || '', 'id');
   });
 
+  _santriFilteredCache = list;
   return list;
 }
 
@@ -2525,11 +2550,12 @@ function bindSantriEvents() {
   const searchEl = document.getElementById('santri-search');
   if (searchEl) {
     // Pastikan focus tetap di input setelah tiap input
-    searchEl.addEventListener('input', e => {
+    searchEl.addEventListener('input', debounce(e => {
       santriState.search = e.target.value;
       santriState.page = 1;
-      updateSantriTbody();        // hanya update tbody, bukan full render
-    });
+      invalidateSantriCache();
+      updateSantriTbody();
+    }, 200));
     // Jaga cursor tidak ke-reset
     searchEl.addEventListener('keydown', e => e.stopPropagation());
   }
@@ -3007,6 +3033,7 @@ async function saveSantri(id, isEdit, existSPP, existCatering) {
   toast(id ? '✅ Data santri berhasil diperbarui!' : '✅ Santri baru berhasil ditambahkan!');
   closeSantriModal();
   await loadAll();
+  invalidateSantriCache();
   refreshSantriTable();
 }
 
@@ -3042,6 +3069,7 @@ function openDeleteModal(santri) {
     toast(`🗑️ ${santri.nama} berhasil dihapus`, 'info');
     closeDeleteModal();
     await loadAll();
+    invalidateSantriCache();
     refreshSantriTable();
   });
 }
@@ -3332,11 +3360,11 @@ function bindSPPEvents() {
   document.getElementById('btn-sinkron-spp')?.addEventListener('click', doSinkronSPPAuto);
 
   // Search
-  document.getElementById('spp-search')?.addEventListener('input', e => {
+  document.getElementById('spp-search')?.addEventListener('input', debounce(e => {
     sppState.search = e.target.value; sppState.page = 1; refreshSPPTbody();
     const btn = document.getElementById('spp-search-clear');
     if (btn) btn.classList.toggle('visible', !!e.target.value);
-  });
+  }, 200));
   document.getElementById('spp-search-clear')?.addEventListener('click', () => {
     sppState.search = ''; sppState.page = 1;
     const el = document.getElementById('spp-search');
@@ -3622,17 +3650,6 @@ async function doSinkronSPP(tahunAjaran, kelasDefault) {
 }
 
 
-function buildComingSoon(page) {
-  const map = { setting:['⚙️','Pengaturan'] };
-  const [icon, name] = map[page] || ['🚧', page];
-  return `
-  <div class="coming-soon">
-    <div class="coming-soon-icon">${icon}</div>
-    <div class="coming-soon-title">Menu ${name}</div>
-    <div class="coming-soon-sub">Sedang dalam pengembangan.<br/>Akan hadir di sesi berikutnya!</div>
-  </div>`;
-}
-
 // ═══════════════════════════════════════════════════
 // MENU CATERING
 // ═══════════════════════════════════════════════════
@@ -3795,9 +3812,9 @@ function buildCateringPagination(current,total) {
 }
 
 function bindCateringEvents() {
-  document.getElementById('cat-search')?.addEventListener('input', e=>{cateringState.search=e.target.value;cateringState.page=1;refreshCateringTbody();
+  document.getElementById('cat-search')?.addEventListener('input', debounce(e=>{cateringState.search=e.target.value;cateringState.page=1;refreshCateringTbody();
     const btn=document.getElementById('cat-search-clear'); if(btn) btn.classList.toggle('visible',!!e.target.value);
-  });
+  }, 200));
   document.getElementById('cat-search-clear')?.addEventListener('click', ()=>{
     cateringState.search=''; cateringState.page=1;
     const el=document.getElementById('cat-search'); if(el){el.value='';el.focus();}
@@ -4905,11 +4922,11 @@ function bindSettingEvents() {
   });
 
   // ── Kenaikan Kelas events ──
-  document.getElementById('kk-search')?.addEventListener('input', e => {
+  document.getElementById('kk-search')?.addEventListener('input', debounce(e => {
     kkPage = 1; renderKenaikanKelas();
     const btn = document.getElementById('kk-search-clear');
     if (btn) btn.classList.toggle('visible', !!e.target.value);
-  });
+  }, 200));
   document.getElementById('kk-search-clear')?.addEventListener('click', () => {
     const el = document.getElementById('kk-search');
     if (el) { el.value = ''; el.focus(); }
@@ -5033,11 +5050,11 @@ function bindSettingEvents() {
   ['tung-jenis','tung-gender','tung-tingkat','tung-filter','tung-mode'].forEach(id =>
     document.getElementById(id)?.addEventListener('change', () => { tungPage = 1; renderTunggakan(); })
   );
-  document.getElementById('tung-search')?.addEventListener('input', e => {
+  document.getElementById('tung-search')?.addEventListener('input', debounce(e => {
     tungPage = 1; renderTunggakan();
     const btn = document.getElementById('tung-search-clear');
     if (btn) btn.classList.toggle('visible', !!e.target.value);
-  });
+  }, 200));
   document.getElementById('tung-search-clear')?.addEventListener('click', () => {
     const el = document.getElementById('tung-search');
     if (el) { el.value = ''; el.focus(); }
@@ -5391,13 +5408,13 @@ async function doKenaikanKelas() {
     updates.forEach(u => {
       if (u.kelas_baru === 'Alumni') return;
       const idx = appData.santri.findIndex(s => s.id === u.id);
-      if (idx >= 0) appData.santri[idx].kelas = u.kelas_baru;
+      if (idx >= 0) { appData.santri[idx].kelas = u.kelas_baru; invalidateSantriCache(); }
       const sppIdx = appData.spp.findIndex(s => s.santri_id === u.id);
       if (sppIdx >= 0) appData.spp[sppIdx].kelas = u.kelas_baru;
     });
     alumniIds.forEach(id => {
       const idx = appData.santri.findIndex(s => s.id === id);
-      if (idx >= 0) appData.santri[idx].status_santri = 'alumni';
+      if (idx >= 0) { appData.santri[idx].status_santri = 'alumni'; invalidateSantriCache(); }
     });
 
     kkSelected.clear();
@@ -5419,7 +5436,7 @@ async function doUpdateStatus(status) {
 
     ids.forEach(id => {
       const idx = appData.santri.findIndex(s => s.id === id);
-      if (idx >= 0) appData.santri[idx].status_santri = status;
+      if (idx >= 0) { appData.santri[idx].status_santri = status; invalidateSantriCache(); }
     });
 
     kkSelected.clear();
@@ -5438,7 +5455,7 @@ async function doHapusSantri() {
     const { error } = await sb.rpc('bulk_hapus_santri', { p_ids: ids });
     if (error) { toast('Gagal: ' + error.message, 'error'); return; }
 
-    appData.santri  = appData.santri.filter(s => !ids.includes(s.id));
+    appData.santri = appData.santri.filter(s => !ids.includes(s.id)); invalidateSantriCache();
     appData.spp     = appData.spp.filter(s => !ids.includes(s.santri_id));
     appData.catering = appData.catering.filter(s => !ids.includes(s.santri_id));
 
@@ -6836,6 +6853,15 @@ function openResetModal() {
     toast('Reset pembayaran berhasil! Semua centang dikosongkan.', 'success');
     await loadAll();
     renderPage('setting');
+  });
+}
+
+// ─── Register Service Worker (PWA) ─────────────────
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.info('SW registered:', reg.scope))
+      .catch(err => console.warn('SW failed:', err));
   });
 }
 
