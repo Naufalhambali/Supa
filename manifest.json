@@ -1,17 +1,17 @@
 {
-  "name": "Darul Falah Gambut",
-  "short_name": "DarulFalah",
-  "description": "Sistem Manajemen Pondok Pesantren Darul Falah Gambut",
-  "start_url": "./index.html",
+  "name": "Sistem Admin Darul Falah Gambut",
+  "short_name": "Darul Falah",
+  "description": "Sistem Administrasi Pondok Pesantren Darul Falah Gambut",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#0d7a6e",
-  "theme_color": "#0d7a6e",
   "orientation": "portrait",
+  "background_color": "#00897b",
+  "theme_color": "#00897b",
   "icons": [
-    {
-      "src": "img/logo.png",
-      "sizes": "192x192",
-      "type": "image/png"
-    }
-  ]
+    { "src": "assets/logo.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "assets/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["education", "productivity"],
+  "lang": "id"
 }
