@@ -1751,6 +1751,159 @@ function toast(msg, type = 'success') {
   setTimeout(() => { el.style.animation = 'none'; el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 3000);
 }
 
+// ══════════════════════════════════════════════════════════
+// ─── OFFLINE QUEUE (IndexedDB) ────────────────────────────
+// Menyimpan operasi pembayaran SPP/Catering saat offline,
+// lalu otomatis retry saat koneksi kembali.
+// ══════════════════════════════════════════════════════════
+const OQ_DB   = 'df-offline-queue';
+const OQ_STOR = 'queue';
+let _oqDb = null;
+
+function oqOpen() {
+  if (_oqDb) return Promise.resolve(_oqDb);
+  return new Promise((res, rej) => {
+    const req = indexedDB.open(OQ_DB, 1);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(OQ_STOR)) {
+        db.createObjectStore(OQ_STOR, { keyPath: 'id', autoIncrement: true });
+      }
+    };
+    req.onsuccess  = e => { _oqDb = e.target.result; res(_oqDb); };
+    req.onerror    = e => rej(e.target.error);
+  });
+}
+
+async function oqEnqueue(op) {
+  // op: { type:'spp'|'catering', tableId, colName, newVal, tarif, santriId, bulan, tahunAjaran, namaFriendly }
+  const db   = await oqOpen();
+  const tx   = db.transaction(OQ_STOR, 'readwrite');
+  const stor  = tx.objectStore(OQ_STOR);
+  stor.add({ ...op, ts: Date.now() });
+  return new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = e => rej(e.target.error); });
+}
+
+async function oqGetAll() {
+  const db   = await oqOpen();
+  const tx   = db.transaction(OQ_STOR, 'readonly');
+  const stor  = tx.objectStore(OQ_STOR);
+  const req  = stor.getAll();
+  return new Promise((res, rej) => { req.onsuccess = () => res(req.result); req.onerror = e => rej(e.target.error); });
+}
+
+async function oqDelete(id) {
+  const db   = await oqOpen();
+  const tx   = db.transaction(OQ_STOR, 'readwrite');
+  tx.objectStore(OQ_STOR).delete(id);
+  return new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = e => rej(e.target.error); });
+}
+
+// ─── Flush queue saat online ──────────────────────────────
+async function oqFlush() {
+  const items = await oqGetAll();
+  if (!items.length) return;
+
+  let flushed = 0, failed = 0;
+  for (const op of items) {
+    try {
+      const tbl = op.type === 'spp' ? 'spp' : 'catering';
+      const { error } = await sb.from(tbl).update({ [op.colName]: op.newVal }).eq('id', op.tableId);
+      if (error) throw error;
+      // Catat log jika baru bayar
+      if (op.newVal) {
+        await sb.from('pembayaran_logs').insert({
+          santri_id:    op.santriId,
+          jenis:        op.type === 'spp' ? 'SPP' : 'Catering',
+          bulan:        op.bulan,
+          nominal:      op.tarif,
+          tahun_ajaran: op.tahunAjaran,
+        });
+      }
+      await oqDelete(op.id);
+      flushed++;
+    } catch {
+      failed++;
+    }
+  }
+
+  if (flushed > 0) {
+    toast(`🔄 ${flushed} data offline berhasil disinkronkan!`);
+    // Reload data setelah flush
+    const ta = appData.setting?.tahun_ajaran_aktif || '';
+    const [sppBaru, catBaru] = await Promise.all([
+      fetchAll('spp_lengkap',
+        'spp_id,santri_id,kelas,tahun_ajaran,bulan_1,bulan_2,bulan_3,bulan_4,bulan_5,bulan_6,bulan_7,bulan_8,bulan_9,bulan_10,bulan_11,bulan_12,nama,gender,status_santri,bin_binti',
+        { tahun_ajaran: ta }),
+      fetchAll('catering_lengkap',
+        'catering_id,santri_id,kamar,tahun_ajaran,bulan_1,bulan_2,bulan_3,bulan_4,bulan_5,bulan_6,bulan_7,bulan_8,bulan_9,bulan_10,bulan_11,bulan_12,nama,gender,status_santri,bin_binti',
+        { tahun_ajaran: ta }),
+    ]);
+    appData.spp     = sppBaru;
+    appData.catering = catBaru;
+    if (currentPage === 'spp')     refreshSPPTbody();
+    if (currentPage === 'catering') refreshCateringTbody();
+  }
+  if (failed > 0) {
+    toast(`⚠️ ${failed} data offline gagal disinkronkan, akan dicoba lagi.`, 'error');
+  }
+}
+
+// ─── Monitor koneksi ─────────────────────────────────────
+let _isOnline = navigator.onLine;
+
+function updateOnlineBanner(online) {
+  let bar = document.getElementById('offline-bar');
+  if (online) {
+    if (bar) { bar.style.transform = 'translateY(-100%)'; setTimeout(() => bar?.remove(), 400); }
+  } else {
+    if (!bar) {
+      bar = document.createElement('div');
+      bar.id = 'offline-bar';
+      bar.style.cssText = `
+        position:fixed;top:0;left:0;right:0;z-index:9999;
+        background:linear-gradient(90deg,#e65100,#ef6c00);
+        color:white;font-family:'Poppins',sans-serif;
+        font-size:12px;font-weight:600;padding:8px 16px;
+        display:flex;align-items:center;gap:8px;
+        transform:translateY(-100%);transition:transform 0.3s ease;`;
+      bar.innerHTML = `
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <line x1="1" y1="1" x2="23" y2="23"/>
+          <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.56 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01"/>
+        </svg>
+        Tidak ada koneksi — perubahan akan disimpan lokal &amp; dikirim saat online`;
+      document.body.appendChild(bar);
+      requestAnimationFrame(() => { bar.style.transform = 'translateY(0)'; });
+    }
+  }
+}
+
+window.addEventListener('online', async () => {
+  _isOnline = true;
+  updateOnlineBanner(true);
+  toast('✅ Koneksi kembali!', 'success');
+  await oqFlush();
+});
+window.addEventListener('offline', () => {
+  _isOnline = false;
+  updateOnlineBanner(false);
+});
+// Cek saat load
+updateOnlineBanner(navigator.onLine);
+
+// ─── Toast error dengan detail yang ramah ────────────────
+function toastGagal(konteks, errMsg) {
+  // Terjemahkan pesan teknis Supabase jadi bahasa manusia
+  let pesan = errMsg || 'Terjadi kesalahan';
+  if (/duplicate/i.test(pesan))          pesan = 'Data sudah ada (duplikat)';
+  else if (/foreign key/i.test(pesan))   pesan = 'Data terkait tidak ditemukan';
+  else if (/network|fetch|failed/i.test(pesan)) pesan = 'Gagal terhubung ke server';
+  else if (/permission|rls|policy/i.test(pesan)) pesan = 'Tidak punya izin untuk aksi ini';
+  else if (/timeout/i.test(pesan))       pesan = 'Koneksi timeout — coba lagi';
+  toast(`❌ Gagal ${konteks}: ${pesan}`, 'error');
+}
+
 // ─── APP STATE ─────────────────────────────────────
 let appData = { setting: null, santri: [], spp: [], catering: [], logs: [], profile: null, allProfiles: [] };
 let currentPage = 'dashboard';
@@ -2996,7 +3149,7 @@ async function saveSantri(id, isEdit, existSPP, existCatering) {
   }
 
   if (error) {
-    toast(error.message, 'error');
+    toastGagal(isEdit ? 'edit data santri' : 'tambah santri', error.message);
     btn.disabled = false;
     btnText.textContent = 'Simpan Data Santri';
     spinner?.classList.add('hidden');
@@ -3499,23 +3652,45 @@ async function doSPPToggle(sppId, bulan, isPaid, tarif) {
   const newVal  = !isPaid;
   const colName = `bulan_${bulan}`;
   const ta      = appData.setting?.tahun_ajaran_aktif || '';
+  const rec     = appData.spp.find(r => r.spp_id === sppId);
 
-  // Update tabel spp menggunakan spp_id (= id di tabel asli)
+  // ── OFFLINE: simpan ke queue, update UI optimis ──────
+  if (!_isOnline) {
+    await oqEnqueue({
+      type:        'spp',
+      tableId:     sppId,
+      colName,
+      newVal,
+      tarif,
+      santriId:    rec?.santri_id,
+      bulan,
+      tahunAjaran: ta,
+      namaFriendly: rec?.nama || '',
+    });
+    // Update appData lokal supaya UI langsung berubah
+    if (rec) rec[colName] = newVal;
+    toast(`📶 Offline — SPP ${BULAN_PANJANG[bulan-1]} ${newVal ? 'dikonfirmasi' : 'dibatalkan'} (akan disinkron saat online)`, 'info');
+    refreshSPPTbody();
+    return;
+  }
+
+  // ── ONLINE: kirim ke Supabase ────────────────────────
   const { error } = await sb.from('spp').update({ [colName]: newVal }).eq('id', sppId);
-  if (error) { toast(error.message, 'error'); return; }
+  if (error) {
+    toastGagal(`simpan SPP ${BULAN_PANJANG[bulan-1]}`, error.message);
+    return;
+  }
 
   // Catat ke pembayaran_logs jika baru bayar
-  if (newVal) {
-    const rec = appData.spp.find(r => r.spp_id === sppId);
-    if (rec) {
-      await sb.from('pembayaran_logs').insert({
-        santri_id:    rec.santri_id,
-        jenis:        'SPP',
-        bulan,
-        nominal:      tarif,
-        tahun_ajaran: ta,
-      });
-    }
+  if (newVal && rec) {
+    const { error: logErr } = await sb.from('pembayaran_logs').insert({
+      santri_id:    rec.santri_id,
+      jenis:        'SPP',
+      bulan,
+      nominal:      tarif,
+      tahun_ajaran: ta,
+    });
+    if (logErr) console.warn('Log SPP gagal:', logErr.message); // non-fatal
   }
 
   toast(newVal
@@ -3523,7 +3698,7 @@ async function doSPPToggle(sppId, bulan, isPaid, tarif) {
     : `↩️ SPP ${BULAN_PANJANG[bulan-1]} dibatalkan`
   );
 
-  // Reload hanya data SPP (ringan, tidak perlu reload semua)
+  // Reload hanya data SPP
   const sppBaru = await fetchAll('spp_lengkap',
     'spp_id,santri_id,kelas,tahun_ajaran,bulan_1,bulan_2,bulan_3,bulan_4,bulan_5,bulan_6,bulan_7,bulan_8,bulan_9,bulan_10,bulan_11,bulan_12,nama,gender,status_santri,bin_binti',
     { tahun_ajaran: ta }
@@ -3876,9 +4051,34 @@ function openCateringConfirmModal({cateringId,santriId,nama,bulan,isPaid,tarif})
     document.getElementById('cat-modal-confirm').textContent='Menyimpan...';
     document.getElementById('cat-modal-confirm').disabled=true;
     const newVal=!isPaid,colName=`bulan_${bulan}`,ta=appData.setting?.tahun_ajaran_aktif||'';
+
+    // ── OFFLINE: simpan ke queue, update UI optimis ──
+    if (!_isOnline) {
+      const rec = appData.catering.find(r => r.catering_id === cateringId);
+      await oqEnqueue({
+        type:        'catering',
+        tableId:     cateringId,
+        colName,
+        newVal,
+        tarif,
+        santriId:    santriId,
+        bulan,
+        tahunAjaran: ta,
+        namaFriendly: nama,
+      });
+      // Update appData lokal supaya UI langsung berubah
+      if (rec) rec[colName] = newVal;
+      toast(`📶 Offline — Catering ${BULAN_PANJANG[bulan-1]} ${newVal?'dikonfirmasi':'dibatalkan'} (akan disinkron saat online)`, 'info');
+      close(); refreshCateringTbody(); return;
+    }
+
+    // ── ONLINE: kirim ke Supabase ────────────────────
     const{error}=await sb.from('catering').update({[colName]:newVal}).eq('id',cateringId);
-    if(error){toast(error.message,'error');close();return;}
-    if(newVal)await sb.from('pembayaran_logs').insert({santri_id:santriId,jenis:'Catering',bulan,nominal:tarif,tahun_ajaran:ta});
+    if(error){ toastGagal(`simpan Catering ${BULAN_PANJANG[bulan-1]}`, error.message); close(); return; }
+    if(newVal){
+      const { error: logErr } = await sb.from('pembayaran_logs').insert({santri_id:santriId,jenis:'Catering',bulan,nominal:tarif,tahun_ajaran:ta});
+      if(logErr) console.warn('Log Catering gagal:', logErr.message);
+    }
     toast(newVal?`✅ Catering ${BULAN_PANJANG[bulan-1]} dikonfirmasi!`:`↩️ Catering ${BULAN_PANJANG[bulan-1]} dibatalkan`);
     const catBaru=await fetchAll('catering_lengkap','catering_id,santri_id,kamar,tahun_ajaran,bulan_1,bulan_2,bulan_3,bulan_4,bulan_5,bulan_6,bulan_7,bulan_8,bulan_9,bulan_10,bulan_11,bulan_12,nama,gender,status_santri,bin_binti',{tahun_ajaran:ta});
     appData.catering=catBaru;close();refreshCateringTbody();
@@ -4200,23 +4400,23 @@ function buildSettingPage() {
   <div class="page-title">Pengaturan</div>
 
   <div class="setting-tabs">
-    <button class="stab active" data-stab="profil">
+    <button class="stab ${activeSettingTab==='profil'?'active':''}" data-stab="profil">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       Profil Saya
     </button>
     ${isSuperAdmin() ? `
-    <button class="stab" data-stab="pengguna">
+    <button class="stab ${activeSettingTab==='pengguna'?'active':''}" data-stab="pengguna">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Pengguna
     </button>` : ''}
-    <button class="stab" data-stab="sistem">
+    <button class="stab ${activeSettingTab==='sistem'?'active':''}" data-stab="sistem">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33A1.65 1.65 0 0 0 14 20.9V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       Sistem
     </button>
   </div>
 
   <!-- ═══ PANEL PROFIL ═══ -->
-  <div id="panel-profil">
+  <div id="panel-profil" style="display:${activeSettingTab==='profil'?'':'none'};">
 
     <!-- Profile Card -->
     <div class="profile-card">
@@ -4305,7 +4505,7 @@ function buildSettingPage() {
   </div><!-- /panel-profil -->
 
   <!-- ═══ PANEL PENGGUNA (Super Admin only) ═══ -->
-  <div id="panel-pengguna" style="display:none;">
+  <div id="panel-pengguna" style="display:${activeSettingTab==='pengguna'?'':'none'};">
 
     <div class="setting-section">
       <div class="setting-section-head accordion open" data-acc="daftar-pengguna">
@@ -4353,7 +4553,7 @@ function buildSettingPage() {
   </div><!-- /panel-pengguna -->
 
   <!-- ═══ PANEL SISTEM ═══ -->
-  <div id="panel-sistem" style="display:none;">
+  <div id="panel-sistem" style="display:${activeSettingTab==='sistem'?'':'none'};">
 
     ${!isAdmin() ? `<div class="readonly-notice">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -6753,7 +6953,7 @@ async function saveTag(type) {
   current.push(val);
 
   const { error } = await sb.from('setting').update({ [dbCol]: current }).eq('id', appData.setting?.id);
-  if (error) { toast('Gagal: ' + error.message, 'error'); return; }
+  if (error) { toastGagal(`tambah ${type}`, error.message); return; }
 
   appData.setting = { ...appData.setting, [dbCol]: current };
   if (inp) inp.value = '';
@@ -6773,7 +6973,7 @@ async function deleteTag(type, idx) {
   openTagDelConfirm(nama, type, async () => {
     current.splice(idx, 1);
     const { error } = await sb.from('setting').update({ [dbCol]: current }).eq('id', appData.setting?.id);
-    if (error) { toast('Gagal: ' + error.message, 'error'); return; }
+    if (error) { toastGagal(`hapus ${type}`, error.message); return; }
     appData.setting = { ...appData.setting, [dbCol]: current };
     toast(`"${nama}" dihapus dari daftar ${type}`);
     activeSettingTab = 'sistem';
