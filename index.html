@@ -12,6 +12,21 @@
 <link rel="apple-touch-icon" href="assets/logo.png"/>
 <title>Darul Falah Gambut — Portal Administrasi</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<!-- Anti-flicker: terapkan dark mode SEBELUM CSS render -->
+<script>
+(function(){
+  try {
+    const saved = localStorage.getItem('df-darkmode');
+    const dark = saved !== null
+      ? saved === '1'
+      : window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (dark) {
+      document.documentElement.classList.add('dark');
+      document.documentElement.style.background = '#0f172a';
+    }
+  } catch(e) {}
+})();
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -40,9 +55,227 @@
   --header-h: 60px;
 }
 
+/* ══════════════════════════════════════════
+   DARK MODE — referensi palet foto
+   Primary  #14B8AA  Secondary #2DD4BF
+   Accent   #34D399  Success   #10B981
+   BG       #0F172A  Surface   #111C2E
+   Border   #1F2A44  Text      #E2EBF0
+══════════════════════════════════════════ */
+.dark {
+  --teal-1: #14b8aa;
+  --teal-2: #2dd4bf;
+  --teal-3: #0d9488;
+  --teal-light: #1f2a44;
+  --teal-xlight: #111c2e;
+  --green-dot: #34d399;
+  --text-dark: #e2ebf0;
+  --text-mid: #94a3b8;
+  --text-light: #64748b;
+  --white: #1f2a44;
+  --bg: #0f172a;
+  --card-bg: #111c2e;
+  --border: #1f2a44;
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
+  --shadow-lg: 0 12px 40px rgba(20,184,170,0.15);
+}
+
+/* Override elemen spesifik yang tidak ikut variabel */
+.dark body                    { background: #0f172a; color: #e2ebf0; }
+.dark .app-header             { background: #111c2e; border-bottom: 1px solid #1f2a44; }
+.dark .bottom-nav             { background: #111c2e; border-top: 1px solid #1f2a44; }
+.dark .nav-btn                { color: #64748b; }
+.dark .nav-btn.active         { color: #14b8aa; }
+.dark .nav-btn.active .nav-icon-wrap { background: rgba(20,184,170,0.15); }
+.dark .page-content           { background: #0f172a; }
+
+/* Cards & sections */
+.dark .income-card,
+.dark .chart-card,
+.dark .activity-card,
+.dark .setting-section,
+.dark .profile-card,
+.dark .tbl-wrap               { background: #111c2e; border-color: #1f2a44; }
+.dark .setting-section-head   { background: #0f172a; border-color: #1f2a44; }
+.dark .setting-section-icon   { background: rgba(20,184,170,0.12); }
+
+/* Tabel */
+.dark .data-table thead tr    { background: #0f172a; }
+.dark .data-table th          { color: #94a3b8; border-color: #1f2a44; }
+.dark .data-table td          { border-color: #1f2a44; color: #e2ebf0; }
+.dark .data-table tr:hover td { background: rgba(20,184,170,0.05); }
+.dark .tbl-no                 { color: #64748b; }
+.dark .tbl-scroll             { background: #111c2e; }
+
+/* Form inputs */
+.dark .f-input,
+.dark .f-select,
+.dark .sfield-input,
+.dark .sfield-select,
+.dark .setting-inline-input,
+.dark .santri-search-input,
+.dark .tag-add-input,
+.dark .lap-sub-tab            { background: #0f172a; border-color: #1f2a44; color: #e2ebf0; }
+.dark .f-input:focus,
+.dark .f-select:focus,
+.dark .sfield-input:focus     { border-color: #14b8aa; }
+.dark .f-input::placeholder,
+.dark .santri-search-input::placeholder { color: #64748b; }
+.dark .f-label,
+.dark .sfield-label           { color: #94a3b8; }
+.dark .sfield-prefix-label    { background: #0f172a; border-color: #1f2a44; color: #94a3b8; }
+.dark .sfield-prefix-input    { background: #0f172a; color: #e2ebf0; }
+.dark select option           { background: #111c2e; color: #e2ebf0; }
+
+/* Header */
+.dark .header-name            { color: #e2ebf0; }
+.dark .header-role            { color: #94a3b8; }
+.dark .header-dropdown        { background: #111c2e; border-color: #1f2a44;
+                                box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+.dark .hdd-item               { color: #94a3b8; }
+.dark .hdd-item:hover         { background: #1f2a44; color: #e2ebf0; }
+.dark .hdd-divider            { border-color: #1f2a44; }
+
+/* Page title & meta */
+.dark .page-title             { color: #e2ebf0; }
+.dark .setting-row-label      { color: #94a3b8; }
+.dark .setting-row-val        { color: #e2ebf0; }
+.dark .setting-section-title  { color: #e2ebf0; }
+.dark .setting-row            { border-color: #1f2a44; }
+
+/* Santri cards & badges */
+.dark .santri-meta            { color: #94a3b8; }
+.dark .tbl-nama               { color: #e2ebf0; }
+.dark .tbl-nama-link          { color: #2dd4bf !important; }
+.dark .filter-drawer          { background: #111c2e; border-color: #1f2a44; }
+.dark .filter-chip            { background: #1f2a44; color: #94a3b8; border-color: #1f2a44; }
+.dark .filter-chip.active     { background: rgba(20,184,170,0.2); color: #14b8aa; border-color: #14b8aa; }
+.dark .per-page-select        { background: #0f172a; border-color: #1f2a44; color: #94a3b8; }
+
+/* SPP & Catering dots */
+.dark .spp-cell.unpaid        { background: #1f2a44; color: #64748b; }
+.dark .spp-cell.paid          { background: rgba(20,184,170,0.2); color: #14b8aa; }
+
+/* Donut chart center */
+.dark .donut-center           { color: #14b8aa; }
+.dark .santri-row-label       { color: #94a3b8; }
+.dark .santri-row-val         { color: #2dd4bf; }
+.dark .santri-row-val.total   { color: #e2ebf0; }
+
+/* Setting tabs */
+.dark .setting-tabs           { background: #0f172a; }
+.dark .stab                   { color: #64748b; }
+.dark .stab.active            { background: #111c2e; color: #14b8aa; border-color: #1f2a44; }
+.dark .stab:hover             { background: #1f2a44; }
+
+/* Profile card */
+.dark .profile-banner         { background: linear-gradient(135deg, #0d9488, #111c2e); }
+.dark .profile-name           { color: #e2ebf0; }
+.dark .profile-email          { color: #94a3b8; }
+.dark .profile-avatar-placeholder { background: rgba(20,184,170,0.15); color: #14b8aa; }
+
+/* User card */
+.dark .user-card              { background: #0f172a; border-color: #1f2a44; }
+.dark .user-card-name         { color: #e2ebf0; }
+.dark .user-card-email        { color: #64748b; }
+
+/* Accordion */
+.dark .setting-section-body   { background: #111c2e; }
+.dark .setting-section-head.accordion { border-color: #1f2a44; }
+.dark .accordion-chevron      { color: #64748b; }
+
+/* Laporan */
+.dark .lap-tbl th             { background: #0f172a; color: #94a3b8; border-color: #1f2a44; }
+.dark .lap-tbl td             { color: #e2ebf0; border-color: #1f2a44; }
+.dark .lap-tbl tr:hover td    { background: rgba(20,184,170,0.05); }
+.dark .lap-sub-tab            { border-color: #1f2a44; color: #64748b; }
+.dark .lap-sub-tab.active     { background: rgba(20,184,170,0.15); color: #14b8aa; border-color: #14b8aa; }
+.dark .lap-summary            { background: #0f172a; border-color: #1f2a44; }
+.dark .tunggakan-tbl th       { background: #0f172a; color: #94a3b8; border-color: #1f2a44; }
+.dark .tunggakan-tbl td       { color: #e2ebf0; border-color: #1f2a44; }
+
+/* Danger zone */
+.dark .danger-zone            { background: rgba(239,68,68,0.05); border-color: rgba(239,68,68,0.2); }
+.dark .danger-zone-title      { color: #f87171; }
+.dark .danger-zone-sub        { color: #94a3b8; }
+
+/* Readonly notice */
+.dark .readonly-notice        { background: rgba(20,184,170,0.08); color: #94a3b8; }
+
+/* Pagination */
+.dark .pg-btn                 { background: #1f2a44; color: #94a3b8; border-color: #1f2a44; }
+.dark .pg-btn.active          { background: #14b8aa; color: white; }
+.dark .pg-btn:hover:not(:disabled) { background: rgba(20,184,170,0.2); color: #14b8aa; }
+
+/* Search */
+.dark .santri-search-wrap     { background: #111c2e; border-color: #1f2a44; }
+.dark .btn-filter             { background: #111c2e; border-color: #1f2a44; color: #94a3b8; }
+.dark .btn-filter.active      { background: rgba(20,184,170,0.15); color: #14b8aa; }
+.dark .search-clear-btn       { color: #64748b; }
+
+/* Tag */
+.dark .tag-item               { background: rgba(20,184,170,0.12); color: #2dd4bf; border-color: rgba(20,184,170,0.2); }
+
+/* Income items */
+.dark .income-item            { background: rgba(20,184,170,0.08); }
+.dark .income-item-label      { color: #2dd4bf; }
+.dark .income-item-val        { color: #e2ebf0; }
+.dark .income-title,
+.dark .chart-title,
+.dark .activity-title         { color: #e2ebf0; }
+.dark .activity-item          { border-color: #1f2a44; }
+.dark .activity-text          { color: #e2ebf0; }
+.dark .activity-time          { color: #64748b; }
+
+/* Permission grid */
+.dark .perm-item              { color: #94a3b8; }
+.dark .perm-item.on           { color: #e2ebf0; }
+
+/* Toast tetap terbaca di dark mode */
+.dark .toast.success          { background: #0d9488; }
+.dark .toast.error            { background: #dc2626; }
+.dark .toast.info             { background: #1f2a44; color: #e2ebf0; }
+
+/* Dark mode toggle button */
+#btn-darkmode {
+  width: 36px; height: 36px; border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-mid);
+  cursor: pointer; font-size: 17px;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; flex-shrink: 0;
+  margin-left: 4px;
+}
+#btn-darkmode:hover {
+  background: var(--teal-xlight);
+  border-color: var(--teal-1);
+  color: var(--teal-1);
+}
+.dark #btn-darkmode {
+  background: #1f2a44;
+  border-color: #2dd4bf;
+  color: #2dd4bf;
+}
+.dark #btn-darkmode:hover {
+  background: rgba(20,184,170,0.2);
+}
+
 html {
   height: 100%;
   overscroll-behavior: none;
+}
+/* Transisi halus saat toggle dark mode */
+body, .app-header, .bottom-nav, .page-content,
+.income-card, .chart-card, .activity-card,
+.setting-section, .tbl-wrap, .tbl-scroll,
+.header-dropdown, .filter-drawer, .f-input,
+.f-select, .sfield-input, .sfield-select,
+.data-table th, .data-table td,
+.setting-section-head, #btn-darkmode {
+  transition: background 0.25s ease, border-color 0.25s ease,
+              color 0.2s ease, box-shadow 0.25s ease;
 }
 body {
   font-family: 'Poppins', sans-serif;
@@ -1653,6 +1886,9 @@ body.modal-open { overflow: hidden; touch-action: none; }
       <div class="header-name" id="header-name">Admin Pesantren</div>
       <div class="header-role">Administrator</div>
     </div>
+    <button id="btn-darkmode" title="Toggle Dark Mode" aria-label="Toggle Dark Mode">
+      <span id="darkmode-icon">🌙</span>
+    </button>
     <div class="header-menu-btn" id="header-menu-btn" style="position:relative;">
       <span>☰</span>
       <div class="header-dropdown hidden" id="header-dropdown">
@@ -1907,6 +2143,38 @@ function toastGagal(konteks, errMsg) {
   else if (/timeout/i.test(pesan))       pesan = 'Koneksi timeout — coba lagi';
   toast(`❌ Gagal ${konteks}: ${pesan}`, 'error');
 }
+
+// ══════════════════════════════════════════════════════════
+// ─── DARK MODE ────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════
+const DM_KEY = 'df-darkmode';
+
+function isDarkMode() {
+  const saved = localStorage.getItem(DM_KEY);
+  if (saved !== null) return saved === '1';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
+function applyDarkMode(dark) {
+  document.documentElement.classList.toggle('dark', dark);
+  document.body.classList.toggle('dark', dark);
+  const icon = document.getElementById('darkmode-icon');
+  if (icon) icon.textContent = dark ? '☀️' : '🌙';
+  localStorage.setItem(DM_KEY, dark ? '1' : '0');
+  // Update theme-color di status bar HP
+  const metaTheme = document.querySelector('meta[name="theme-color"]');
+  if (metaTheme) metaTheme.content = dark ? '#111c2e' : '#00897b';
+}
+
+function toggleDarkMode() {
+  applyDarkMode(!document.body.classList.contains('dark'));
+}
+
+applyDarkMode(isDarkMode());
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+  if (localStorage.getItem(DM_KEY) === null) applyDarkMode(e.matches);
+});
 
 // ─── APP STATE ─────────────────────────────────────
 let appData = { setting: null, santri: [], spp: [], catering: [], logs: [], profile: null, allProfiles: [] };
@@ -2226,6 +2494,11 @@ function updateHeaderProfile() {
 }
 
 // ─── HEADER MENU ───────────────────────────────────
+document.getElementById('btn-darkmode').addEventListener('click', e => {
+  e.stopPropagation();
+  toggleDarkMode();
+});
+
 document.getElementById('header-menu-btn').addEventListener('click', e => {
   e.stopPropagation();
   document.getElementById('header-dropdown').classList.toggle('hidden');
@@ -7177,3 +7450,4 @@ if ('serviceWorker' in navigator) {
 }
 
 </script>
+a
