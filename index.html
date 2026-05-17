@@ -493,6 +493,21 @@ body {
 .btn-save-setting:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,184,148,0.4); }
 .btn-save-setting:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
+/* Backup lengkap button */
+.btn-backup-full {
+  width: 100%; display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, var(--teal-1), var(--teal-3));
+  border: none; cursor: pointer; color: white; text-align: left;
+  font-family: 'Poppins', sans-serif; margin-bottom: 16px;
+  box-shadow: 0 4px 14px rgba(0,184,148,0.25);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-backup-full:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,184,148,0.35); }
+.btn-backup-full:active { transform: translateY(0); }
+.btn-backup-full:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+.btn-backup-full svg { width: 28px; height: 28px; flex-shrink: 0; opacity: 0.9; }
+
 /* Tag list (kelas/kamar) */
 .tag-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; min-height: 32px; }
 .tag-item {
@@ -4854,6 +4869,24 @@ function buildSettingPage() {
           </button>
         </div>
 
+        <!-- Backup Lengkap (restore-ready) -->
+        <div style="font-size:12px;font-weight:700;color:var(--text-mid);margin-bottom:8px;">🗄️ Backup Lengkap (Restore-Ready)</div>
+        <div style="padding:10px 12px;background:var(--teal-xlight);border-radius:10px;font-size:11px;color:var(--text-mid);margin-bottom:10px;line-height:1.6;">
+          Backup mencakup seluruh tabel: <strong>santri, spp, catering, pembayaran_logs</strong> dan <strong>setting</strong>.
+          File JSON yang dihasilkan bisa langsung di-restore ke Supabase jika data hilang.
+        </div>
+        <button class="btn-backup-full" id="btn-backup-full">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+          </svg>
+          <div>
+            <div style="font-weight:700;font-size:13px;">Download Backup Lengkap</div>
+            <div style="font-size:11px;opacity:0.8;">JSON — santri + SPP + catering + logs + setting</div>
+          </div>
+          <span id="backup-full-size" style="margin-left:auto;font-size:10px;opacity:0.7;"></span>
+        </button>
+
         <!-- Import -->
         <div style="font-size:12px;font-weight:700;color:var(--text-mid);margin-bottom:8px;">⬆️ Import Santri</div>
         <div class="import-zone" id="import-drop-zone">
@@ -5824,12 +5857,10 @@ function bindImportEvents() {
   document.getElementById('btn-backup-santri')?.addEventListener('click', () => {
     const rows = appData.santri.map(s => IMPORT_COLS.map(col => {
       let v = s[col] ?? '';
-      // Format tanggal dari YYYY-MM-DD ke DD/MM/YYYY
       if (col === 'tanggal_lahir' && v) {
         const d = v.split('-');
         if (d.length === 3) v = `${d[2]}/${d[1]}/${d[0]}`;
       }
-      // Escape koma dan petik
       if (String(v).includes(',') || String(v).includes('"')) v = `"${String(v).replace(/"/g,'""')}"`;
       return v;
     }).join(','));
@@ -5837,6 +5868,81 @@ function bindImportEvents() {
     const tgl = new Date().toISOString().slice(0,10);
     downloadText(csv, `backup_santri_${tgl}.csv`, 'text/csv');
     toast(`Backup ${appData.santri.length} santri berhasil didownload!`);
+  });
+
+  // ── Backup Lengkap (restore-ready JSON) ──────────────
+  document.getElementById('btn-backup-full')?.addEventListener('click', async () => {
+    const btn = document.getElementById('btn-backup-full');
+    const origHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<div style="width:22px;height:22px;border:2.5px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.7s linear infinite;flex-shrink:0;"></div><div><div style="font-weight:700;font-size:13px;">Mengambil data...</div><div style="font-size:11px;opacity:0.8;">Mohon tunggu</div></div>`;
+
+    try {
+      // Ambil semua data langsung dari Supabase (bukan dari appData cache)
+      // agar backup selalu fresh dan tidak ada yang terlewat
+      toast('📦 Mengambil data dari server...');
+
+      const [
+        { data: santri,  error: e1 },
+        { data: spp,     error: e2 },
+        { data: catering,error: e3 },
+        { data: logs,    error: e4 },
+        { data: setting, error: e5 },
+      ] = await Promise.all([
+        sb.from('santri').select('*').order('nama'),
+        sb.from('spp').select('*').order('tahun_ajaran').order('santri_id'),
+        sb.from('catering').select('*').order('tahun_ajaran').order('santri_id'),
+        sb.from('pembayaran_logs').select('*').order('created_at'),
+        sb.from('setting').select('*'),
+      ]);
+
+      const errs = [e1,e2,e3,e4,e5].filter(Boolean);
+      if (errs.length) throw new Error(errs.map(e => e.message).join(', '));
+
+      // Susun payload backup
+      const payload = {
+        _meta: {
+          versi:        '1.0',
+          pesantren:    appData.setting?.nama_pesantren || 'Darul Falah Gambut',
+          tahun_ajaran: appData.setting?.tahun_ajaran_aktif || '-',
+          dibuat:       new Date().toISOString(),
+          total: {
+            santri:          santri?.length  || 0,
+            spp:             spp?.length     || 0,
+            catering:        catering?.length|| 0,
+            pembayaran_logs: logs?.length    || 0,
+          },
+          restore_info: 'Gunakan SQL restore di bawah, atau import manual via Supabase Table Editor.',
+        },
+        santri:          santri   || [],
+        spp:             spp      || [],
+        catering:        catering || [],
+        pembayaran_logs: logs     || [],
+        setting:         setting  || [],
+      };
+
+      const json    = JSON.stringify(payload, null, 2);
+      const bytes   = new TextEncoder().encode(json).length;
+      const ukuran  = bytes > 1024*1024
+        ? `${(bytes/1024/1024).toFixed(1)} MB`
+        : `${(bytes/1024).toFixed(0)} KB`;
+
+      const tgl  = new Date().toISOString().slice(0,10);
+      const nama = `backup_darulfalah_${tgl}.json`;
+      downloadText(json, nama, 'application/json');
+
+      toast(`✅ Backup lengkap berhasil! ${payload._meta.total.santri} santri · ${payload._meta.total.spp} SPP · ${ukuran}`);
+
+      // Tampilkan ukuran di tombol
+      const sizeEl = document.getElementById('backup-full-size');
+      if (sizeEl) sizeEl.textContent = ukuran;
+
+    } catch(err) {
+      toastGagal('download backup', err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = origHTML;
+    }
   });
 
   // Drop zone
@@ -7174,3 +7280,4 @@ if ('serviceWorker' in navigator) {
 }
 
 </script>
+a
