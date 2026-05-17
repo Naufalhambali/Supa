@@ -5883,20 +5883,20 @@ function bindImportEvents() {
       toast('📦 Mengambil data dari server...');
 
       const [
-        { data: santri,  error: e1 },
-        { data: spp,     error: e2 },
-        { data: catering,error: e3 },
-        { data: logs,    error: e4 },
+        santri,
+        spp,
+        catering,
+        logs,
         { data: setting, error: e5 },
       ] = await Promise.all([
-        sb.from('santri').select('*').order('nama'),
-        sb.from('spp').select('*').order('tahun_ajaran').order('santri_id'),
-        sb.from('catering').select('*').order('tahun_ajaran').order('santri_id'),
-        sb.from('pembayaran_logs').select('*').order('created_at'),
+        fetchAll('santri', '*'),
+        fetchAll('spp',    '*'),
+        fetchAll('catering', '*'),
+        fetchAll('pembayaran_logs', '*'),
         sb.from('setting').select('*'),
       ]);
 
-      const errs = [e1,e2,e3,e4,e5].filter(Boolean);
+      const errs = [e5].filter(Boolean);
       if (errs.length) throw new Error(errs.map(e => e.message).join(', '));
 
       // Susun payload backup
@@ -7280,4 +7280,3 @@ if ('serviceWorker' in navigator) {
 }
 
 </script>
-a
