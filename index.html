@@ -94,12 +94,10 @@ body {
   margin-bottom: 28px;
 }
 .login-logo-circle {
-  width: 72px; height: 72px;
-  background: linear-gradient(135deg, var(--teal-1), var(--teal-3));
+  width: 80px; height: 80px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   margin-bottom: 14px;
-  box-shadow: 0 8px 24px rgba(0,184,148,0.35);
   animation: popIn 0.6s 0.2s cubic-bezier(0.34,1.56,0.64,1) both;
 }
 .login-logo-circle svg { width: 36px; height: 36px; }
@@ -173,7 +171,7 @@ body {
 
 /* ─── TOAST ───────────────────────────────── */
 .toast-wrap {
-  position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+  position: fixed; top: calc(var(--header-h) + 12px); left: 50%; transform: translateX(-50%);
   z-index: 9999; display: flex; flex-direction: column; gap: 8px;
   pointer-events: none; width: 90%; max-width: 360px;
 }
@@ -1585,7 +1583,7 @@ body.modal-open { overflow: hidden; touch-action: none; }
     <div class="login-logo-wrap">
       <div class="login-logo-circle">
         <img src="assets/logo.png" alt="Logo Darul Falah"
-          style="width:64px;height:64px;object-fit:contain;border-radius:50%;"
+          style="width:80px;height:80px;object-fit:contain;"
           onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
         <!-- Fallback SVG jika file tidak ditemukan -->
         <svg viewBox="0 0 36 36" fill="none" style="display:none;">
@@ -2024,25 +2022,39 @@ async function doLogin() {
 
 // Durasi auto logout karena inaktivitas: 60 menit
 const AUTO_LOGOUT_MS = 60 * 60 * 1000;
+const LAST_ACTIVE_KEY = 'df-last-active';
 let _inactivityTimer = null;
 let _inactivityLastReset = Date.now();
 
 function resetInactivityTimer() {
   clearTimeout(_inactivityTimer);
   _inactivityLastReset = Date.now();
+  // Simpan ke localStorage agar persist saat browser ditutup paksa di HP
+  try { localStorage.setItem(LAST_ACTIVE_KEY, _inactivityLastReset); } catch(e) {}
   _inactivityTimer = setTimeout(() => {
     doLogout('inaktif');
   }, AUTO_LOGOUT_MS);
 }
 
+function checkInactivityExpired() {
+  try {
+    const saved = localStorage.getItem(LAST_ACTIVE_KEY);
+    if (!saved) return false;
+    const elapsed = Date.now() - parseInt(saved, 10);
+    return elapsed > AUTO_LOGOUT_MS;
+  } catch(e) { return false; }
+}
+
 // Pantau aktivitas user — reset timer setiap ada interaksi
-['click','touchstart','keydown','scroll'].forEach(ev => {
+['click','touchstart','keydown','scroll','pointerdown'].forEach(ev => {
   document.addEventListener(ev, resetInactivityTimer, { passive: true });
 });
 
 async function doLogout(reason = '') {
   // Hentikan timer inaktivitas
   clearTimeout(_inactivityTimer);
+  // Bersihkan timestamp dari localStorage
+  try { localStorage.removeItem(LAST_ACTIVE_KEY); } catch(e) {}
 
   // Tutup dropdown jika terbuka
   document.getElementById('header-dropdown')?.classList.add('hidden');
@@ -2097,24 +2109,30 @@ sb.auth.onAuthStateChange((event, session) => {
 });
 
 // ─── Revalidasi session saat app kembali dari background ──
-// Kasus: user tutup HP lama, buka lagi — token mungkin sudah expired
+// Kasus: user tutup HP lama, buka lagi — token mungkin expired
+// atau sudah melewati batas inaktivitas
 document.addEventListener('visibilitychange', async () => {
   if (document.visibilityState !== 'visible') return;
   // Hanya cek jika sedang di screen-app
   if (!document.getElementById('screen-app')?.classList.contains('active')) return;
 
+  // 1. Cek inaktivitas dari localStorage (menangani kasus browser mati)
+  if (checkInactivityExpired()) {
+    doLogout('inaktif');
+    return;
+  }
+
+  // 2. Cek validitas session Supabase
   try {
     const { data, error } = await sb.auth.getSession();
     if (error || !data?.session) {
-      // Session sudah tidak valid
       doLogout('expired');
     } else {
-      // Session masih valid — refresh token jika mendekati expiry
       currentUser = data.session.user;
       resetInactivityTimer();
     }
   } catch(e) {
-    // Network error saat cek — jangan logout, biarkan offline mode
+    // Network error — jangan logout, biarkan offline mode
     console.warn('visibilitychange session check failed:', e);
   }
 });
@@ -2124,6 +2142,15 @@ document.addEventListener('visibilitychange', async () => {
   try {
     const { data, error } = await sb.auth.getSession();
     if (data?.session) {
+      // Cek apakah sudah melewati batas inaktivitas saat browser mati
+      if (checkInactivityExpired()) {
+        // Paksa logout dulu baru tampil login
+        try { await sb.auth.signOut({ scope: 'global' }); } catch(e) {}
+        try { localStorage.removeItem(LAST_ACTIVE_KEY); } catch(e) {}
+        toast('⏱️ Sesi berakhir karena tidak aktif. Silakan login kembali.', 'info');
+        showScreen('screen-login');
+        return;
+      }
       currentUser = data.session.user;
       resetInactivityTimer();
       showScreen('screen-app');
